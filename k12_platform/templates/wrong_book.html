@@ -1,0 +1,119 @@
+{% extends "layout.html" %}
+
+{% block title %}错题本 - 智慧教育平台{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">📕 错题本</h1>
+    <p class="page-subtitle">回顾错题，巩固知识点</p>
+</div>
+
+<div id="wrongBookContent">
+    <div class="loading">
+        <div class="loading-spinner"></div>
+        <span class="loading-text">加载中...</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadWrongBook() {
+    try {
+        const wrongs = await api('/api/wrong-book');
+        const container = document.getElementById('wrongBookContent');
+        
+        if (wrongs.length === 0) {
+            container.innerHTML = `
+                <div class="card">
+                    <div class="empty-state">
+                        <div class="empty-icon">🎉</div>
+                        <p class="empty-title">错题本是空的</p>
+                        <p class="empty-text">太棒了！继续保持，不断进步！</p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = `
+            <div class="wrong-book-grid">
+                ${wrongs.map(w => `
+                    <div class="card wrong-card" id="wrong-${w.id}">
+                        <div class="wrong-card-header">
+                            <span class="tag">${w.subject || '未分类'}</span>
+                            <span class="wrong-subject">${new Date(w.created_at).toLocaleDateString()}</span>
+                        </div>
+                        
+                        <div class="wrong-content">
+                            ${w.image_url ? `<img src="${w.image_url}" style="max-width: 100%; border-radius: var(--radius-sm); margin-bottom: var(--spacing-md);">` : ''}
+                            ${w.content || '图片题目'}
+                        </div>
+                        
+                        <div class="wrong-answer">
+                            <div class="wrong-answer-label">正确答案</div>
+                            <div>${w.answer}</div>
+                        </div>
+                        
+                        ${w.steps && w.steps.length > 0 ? `
+                            <details style="margin-bottom: var(--spacing-md);">
+                                <summary style="cursor: pointer; color: var(--primary); font-weight: 500;">查看解题步骤</summary>
+                                <ul class="steps-list" style="margin-top: var(--spacing-md);">
+                                    ${w.steps.map((step, i) => `
+                                        <li class="step-item">
+                                            <span class="step-number">${i + 1}</span>
+                                            <div class="step-content">${step}</div>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </details>
+                        ` : ''}
+                        
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--spacing-md);">
+                            <span style="color: var(--text-secondary); font-size: 13px;">
+                                已练习 <strong>${w.practice_count}</strong> 次
+                            </span>
+                        </div>
+                        
+                        <div class="wrong-actions">
+                            <button class="btn btn-secondary btn-sm" onclick="practice(${w.id})">
+                                <i class="fas fa-redo"></i>
+                                再练一次
+                            </button>
+                            <button class="btn btn-sm" style="background: var(--success); color: white;" onclick="master(${w.id})">
+                                <i class="fas fa-check"></i>
+                                已掌握
+                            </button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+async function practice(wrongId) {
+    try {
+        await api(`/api/wrong-book/practice/${wrongId}`, { method: 'POST' });
+        showToast('已记录练习！');
+        loadWrongBook();
+    } catch (error) {
+        // 错误已处理
+    }
+}
+
+async function master(wrongId) {
+    try {
+        await api(`/api/wrong-book/master/${wrongId}`, { method: 'POST' });
+        showToast('太棒了！已标记为掌握！', 'success');
+        document.getElementById(`wrong-${wrongId}`).remove();
+    } catch (error) {
+        // 错误已处理
+    }
+}
+
+loadWrongBook();
+</script>
+{% endblock %}

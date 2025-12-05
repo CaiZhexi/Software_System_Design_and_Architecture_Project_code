@@ -1,0 +1,188 @@
+{% extends "layout.html" %}
+
+{% block title %}学习统计 - 智慧教育平台{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">📊 学习统计</h1>
+    <p class="page-subtitle">了解你的学习情况，发现进步空间</p>
+</div>
+
+<!-- 统计卡片 -->
+<div class="stats-grid" id="statsGrid">
+    <div class="stat-card">
+        <div class="stat-icon primary">📝</div>
+        <div class="stat-value" id="totalQuestions">-</div>
+        <div class="stat-label">总题目数</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon success">✅</div>
+        <div class="stat-value" id="accuracyRate">-</div>
+        <div class="stat-label">正确率</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon warning">📕</div>
+        <div class="stat-value" id="wrongCount">-</div>
+        <div class="stat-label">待掌握错题</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon info">✍️</div>
+        <div class="stat-value" id="essayCount">-</div>
+        <div class="stat-label">作文批改</div>
+    </div>
+</div>
+
+<div class="charts-row">
+    <!-- 作文分数 -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">📈 学习概览</h3>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--spacing-lg);">
+            <div style="text-align: center; padding: var(--spacing-xl); background: linear-gradient(135deg, rgba(255,107,53,0.1) 0%, rgba(255,107,53,0.05) 100%); border-radius: var(--radius-lg);">
+                <div style="font-size: 42px; font-weight: 700; color: var(--primary);" id="recentQuestions">-</div>
+                <div style="color: var(--text-secondary);">本周做题</div>
+            </div>
+            <div style="text-align: center; padding: var(--spacing-xl); background: linear-gradient(135deg, rgba(0,184,148,0.1) 0%, rgba(0,184,148,0.05) 100%); border-radius: var(--radius-lg);">
+                <div style="font-size: 42px; font-weight: 700; color: var(--success);" id="masteredCount">-</div>
+                <div style="color: var(--text-secondary);">已掌握</div>
+            </div>
+            <div style="text-align: center; padding: var(--spacing-xl); background: linear-gradient(135deg, rgba(123,104,238,0.1) 0%, rgba(123,104,238,0.05) 100%); border-radius: var(--radius-lg);">
+                <div style="font-size: 42px; font-weight: 700; color: var(--purple);" id="avgEssayScore">-</div>
+                <div style="color: var(--text-secondary);">作文平均分</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 薄弱知识点 -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">⚠️ 薄弱知识点</h3>
+        </div>
+        <ul class="weak-points-list" id="weakPointsList">
+            <li class="weak-point-item">
+                <span class="weak-point-name">加载中...</span>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- 推荐练习 -->
+<div class="card" style="margin-top: var(--spacing-xl);">
+    <div class="card-header">
+        <h3 class="card-title">🎯 推荐练习</h3>
+        <button class="btn btn-ghost btn-sm" onclick="loadRecommendations()">
+            <i class="fas fa-sync"></i>
+            换一批
+        </button>
+    </div>
+    <div id="recommendList">
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            <span class="loading-text">生成推荐中...</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 加载统计数据
+async function loadStats() {
+    try {
+        const stats = await api('/api/statistics');
+        
+        document.getElementById('totalQuestions').textContent = stats.total_questions;
+        document.getElementById('accuracyRate').textContent = stats.accuracy_rate + '%';
+        document.getElementById('wrongCount').textContent = stats.wrong_count;
+        document.getElementById('essayCount').textContent = stats.essay_count;
+        document.getElementById('recentQuestions').textContent = stats.recent_questions;
+        document.getElementById('masteredCount').textContent = stats.mastered_count;
+        document.getElementById('avgEssayScore').textContent = stats.avg_essay_score || '-';
+        
+        // 薄弱知识点
+        const weakList = document.getElementById('weakPointsList');
+        if (stats.weak_points.length > 0) {
+            weakList.innerHTML = stats.weak_points.map(wp => `
+                <li class="weak-point-item">
+                    <span class="weak-point-name">${wp.name}</span>
+                    <span class="weak-point-count">${wp.count}题</span>
+                </li>
+            `).join('');
+        } else {
+            weakList.innerHTML = '<li class="weak-point-item"><span class="weak-point-name" style="color: var(--success);">暂无薄弱知识点 👍</span></li>';
+        }
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// 加载推荐
+async function loadRecommendations() {
+    const container = document.getElementById('recommendList');
+    container.innerHTML = `
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            <span class="loading-text">生成推荐中...</span>
+        </div>
+    `;
+    
+    try {
+        const exercises = await api('/api/recommend');
+        
+        if (exercises.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state" style="padding: var(--spacing-lg);">
+                    <p class="empty-text">暂无推荐练习，继续努力学习吧！</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = exercises.map((ex, i) => `
+            <div style="padding: var(--spacing-lg); border-bottom: 1px solid var(--border);">
+                <div style="display: flex; align-items: flex-start; gap: var(--spacing-md);">
+                    <span style="background: var(--primary); color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; flex-shrink: 0;">${i + 1}</span>
+                    <div style="flex: 1;">
+                        <p style="margin-bottom: var(--spacing-md); line-height: 1.7;">${ex.question}</p>
+                        ${ex.options ? `
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--spacing-sm); margin-bottom: var(--spacing-md);">
+                                ${ex.options.map(opt => `<div style="padding: var(--spacing-sm) var(--spacing-md); background: var(--bg-primary); border-radius: var(--radius-sm);">${opt}</div>`).join('')}
+                            </div>
+                        ` : ''}
+                        <details>
+                            <summary style="cursor: pointer; color: var(--primary); font-weight: 500;">查看答案</summary>
+                            <div style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--bg-primary); border-radius: var(--radius-md);">
+                                <p><strong>答案：</strong>${ex.answer}</p>
+                                <p style="margin-top: var(--spacing-sm); color: var(--text-secondary);">${ex.explanation}</p>
+                            </div>
+                        </details>
+                        <div style="margin-top: var(--spacing-sm);">
+                            <span class="tag tag-info">${ex.knowledge_point}</span>
+                            <span class="tag" style="margin-left: var(--spacing-xs);">难度 ${'⭐'.repeat(ex.difficulty || 3)}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        container.innerHTML = `
+            <div class="empty-state" style="padding: var(--spacing-lg);">
+                <p class="empty-text">加载推荐失败，请稍后重试</p>
+            </div>
+        `;
+    }
+}
+
+// 确保在window加载完成后执行
+if (document.readyState === 'complete') {
+    loadStats();
+    loadRecommendations();
+} else {
+    window.addEventListener('load', function() {
+        loadStats();
+        loadRecommendations();
+    });
+}
+</script>
+{% endblock %}

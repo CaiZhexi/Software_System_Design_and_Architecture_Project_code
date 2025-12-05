@@ -1,0 +1,155 @@
+{% extends "layout.html" %}
+
+{% block title %}学习中心 - 智慧教育平台{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">👋 你好，{{ user.username }}！</h1>
+    <p class="page-subtitle">今天想学点什么？选择下面的功能开始吧</p>
+</div>
+
+<!-- 快捷功能卡片 -->
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--spacing-xl); margin-bottom: var(--spacing-2xl);">
+    <a href="/question" class="card" style="text-decoration: none; cursor: pointer; transition: transform 0.3s;">
+        <div style="text-align: center;">
+            <div style="font-size: 56px; margin-bottom: var(--spacing-md);">📸</div>
+            <h3 style="color: var(--text-primary); margin-bottom: var(--spacing-sm);">拍照解题</h3>
+            <p style="color: var(--text-secondary); font-size: 14px;">拍照或输入题目，AI帮你详细解答</p>
+        </div>
+    </a>
+    
+    <a href="/essay" class="card" style="text-decoration: none; cursor: pointer;">
+        <div style="text-align: center;">
+            <div style="font-size: 56px; margin-bottom: var(--spacing-md);">✍️</div>
+            <h3 style="color: var(--text-primary); margin-bottom: var(--spacing-sm);">作文批改</h3>
+            <p style="color: var(--text-secondary); font-size: 14px;">提交作文，获得专业批改建议</p>
+        </div>
+    </a>
+    
+    <a href="/chat" class="card" style="text-decoration: none; cursor: pointer;">
+        <div style="text-align: center;">
+            <div style="font-size: 56px; margin-bottom: var(--spacing-md);">💬</div>
+            <h3 style="color: var(--text-primary); margin-bottom: var(--spacing-sm);">学习助手</h3>
+            <p style="color: var(--text-secondary); font-size: 14px;">有问必答，你的专属学习伙伴</p>
+        </div>
+    </a>
+</div>
+
+<!-- 学习概览 -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--spacing-xl);">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">📊 本周学习概览</h3>
+        </div>
+        <div id="statsOverview" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--spacing-lg);">
+            <div style="text-align: center; padding: var(--spacing-lg); background: var(--bg-primary); border-radius: var(--radius-md);">
+                <div style="font-size: 32px; font-weight: 700; color: var(--primary);" id="statQuestions">-</div>
+                <div style="color: var(--text-secondary); font-size: 14px;">解答题目</div>
+            </div>
+            <div style="text-align: center; padding: var(--spacing-lg); background: var(--bg-primary); border-radius: var(--radius-md);">
+                <div style="font-size: 32px; font-weight: 700; color: var(--success);" id="statAccuracy">-</div>
+                <div style="color: var(--text-secondary); font-size: 14px;">正确率</div>
+            </div>
+            <div style="text-align: center; padding: var(--spacing-lg); background: var(--bg-primary); border-radius: var(--radius-md);">
+                <div style="font-size: 32px; font-weight: 700; color: var(--purple);" id="statEssays">-</div>
+                <div style="color: var(--text-secondary); font-size: 14px;">作文批改</div>
+            </div>
+            <div style="text-align: center; padding: var(--spacing-lg); background: var(--bg-primary); border-radius: var(--radius-md);">
+                <div style="font-size: 32px; font-weight: 700; color: var(--secondary);" id="statMastered">-</div>
+                <div style="color: var(--text-secondary); font-size: 14px;">已掌握</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">⚠️ 薄弱知识点</h3>
+        </div>
+        <ul class="weak-points-list" id="weakPointsList">
+            <li class="weak-point-item">
+                <span class="weak-point-name">加载中...</span>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- 最近记录 -->
+<div class="card" style="margin-top: var(--spacing-xl);">
+    <div class="card-header">
+        <h3 class="card-title">📝 最近学习记录</h3>
+        <a href="/statistics" class="btn btn-ghost btn-sm">查看全部</a>
+    </div>
+    <div id="recentHistory">
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            <span class="loading-text">加载中...</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 加载统计数据
+async function loadStats() {
+    try {
+        const stats = await api('/api/statistics');
+        document.getElementById('statQuestions').textContent = stats.recent_questions;
+        document.getElementById('statAccuracy').textContent = stats.accuracy_rate + '%';
+        document.getElementById('statEssays').textContent = stats.essay_count;
+        document.getElementById('statMastered').textContent = stats.mastered_count;
+        
+        // 薄弱知识点
+        const weakList = document.getElementById('weakPointsList');
+        if (stats.weak_points.length > 0) {
+            weakList.innerHTML = stats.weak_points.map(wp => `
+                <li class="weak-point-item">
+                    <span class="weak-point-name">${wp.name}</span>
+                    <span class="weak-point-count">${wp.count}题</span>
+                </li>
+            `).join('');
+        } else {
+            weakList.innerHTML = '<li class="weak-point-item"><span class="weak-point-name" style="color: var(--success);">暂无薄弱知识点 👍</span></li>';
+        }
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// 加载最近记录
+async function loadHistory() {
+    try {
+        const data = await api('/api/history?limit=5');
+        const container = document.getElementById('recentHistory');
+        
+        if (data.items.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📭</div>
+                    <p class="empty-title">还没有学习记录</p>
+                    <p class="empty-text">开始提问或练习吧！</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = data.items.map(item => `
+            <div style="display: flex; align-items: center; padding: var(--spacing-md) 0; border-bottom: 1px solid var(--border);">
+                <div style="flex: 1;">
+                    <div style="font-weight: 500; margin-bottom: 4px;">${item.content ? item.content.substring(0, 50) + '...' : '图片题目'}</div>
+                    <div style="font-size: 13px; color: var(--text-secondary);">
+                        <span class="tag tag-info" style="margin-right: 8px;">${item.subject}</span>
+                        ${new Date(item.created_at).toLocaleString()}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+loadStats();
+loadHistory();
+</script>
+{% endblock %}

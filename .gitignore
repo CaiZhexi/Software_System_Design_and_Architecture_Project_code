@@ -1,0 +1,18 @@
+*.pdf
+*.ppt
+architecture_diagrams
+*.docx
+*.pptx
+
+# 敏感文件
+.env
+*.db
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# macOS
+.DS_Store

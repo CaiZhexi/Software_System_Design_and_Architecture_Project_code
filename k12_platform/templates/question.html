@@ -1,0 +1,270 @@
+{% extends "layout.html" %}
+
+{% block title %}拍照解题 - 智慧教育平台{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">📸 拍照解题</h1>
+    <p class="page-subtitle">上传题目图片或输入文字，AI帮你详细解答</p>
+</div>
+
+<div class="question-container">
+    <!-- 输入区域 -->
+    <div class="question-input-card">
+        <div class="card">
+            <h3 class="card-title" style="margin-bottom: var(--spacing-lg);">输入题目</h3>
+            
+            <form id="questionForm">
+                <!-- 学科选择 -->
+                <div class="input-group">
+                    <label>选择学科</label>
+                    <div class="subject-select" id="subjectSelect">
+                        <span class="subject-option active" data-value="数学">🔢 数学</span>
+                        <span class="subject-option" data-value="物理">⚛️ 物理</span>
+                        <span class="subject-option" data-value="化学">🧪 化学</span>
+                        <span class="subject-option" data-value="生物">🧬 生物</span>
+                        <span class="subject-option" data-value="语文">📖 语文</span>
+                        <span class="subject-option" data-value="英语">🔤 英语</span>
+                    </div>
+                    <input type="hidden" name="subject" id="subjectInput" value="数学">
+                </div>
+                
+                <!-- 图片上传 -->
+                <div class="input-group">
+                    <label>上传题目图片（可选）</label>
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📷</div>
+                        <div class="upload-text">
+                            点击上传或拖拽图片到此处<br>
+                            <strong>支持 JPG、PNG 格式</strong>
+                        </div>
+                        <input type="file" id="imageInput" name="image" accept="image/*" style="display: none;">
+                        <img id="previewImage" class="preview-image" style="display: none;">
+                    </div>
+                </div>
+                
+                <!-- 文字输入 -->
+                <div class="input-group">
+                    <label>题目内容（可配合图片使用）</label>
+                    <textarea class="input" name="content" id="contentInput" placeholder="输入题目内容，例如：已知函数f(x)=x²+2x+1，求f(3)的值..."></textarea>
+                </div>
+                
+                <button type="button" class="btn btn-primary btn-lg" style="width: 100%;" id="submitBtn" onclick="submitQuestion()">
+                    <i class="fas fa-magic"></i>
+                    开始解答
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 答案区域 -->
+    <div>
+        <div class="card answer-card" id="answerCard" style="display: none;">
+            <div class="card-header">
+                <h3 class="card-title">💡 解答结果</h3>
+                <span class="tag tag-success" id="subjectTag">数学</span>
+            </div>
+            
+            <!-- 最终答案 -->
+            <div class="answer-section">
+                <h3><i class="fas fa-check-circle icon"></i> 最终答案</h3>
+                <div class="final-answer" id="finalAnswer"></div>
+            </div>
+            
+            <!-- 分步骤解析 -->
+            <div class="answer-section">
+                <h3><i class="fas fa-list-ol icon"></i> 解题步骤</h3>
+                <ul class="steps-list" id="stepsList"></ul>
+            </div>
+            
+            <!-- 知识点 -->
+            <div class="answer-section">
+                <h3><i class="fas fa-lightbulb icon"></i> 涉及知识点</h3>
+                <div class="knowledge-tags" id="knowledgeTags"></div>
+            </div>
+            
+            <!-- 解题技巧 -->
+            <div class="answer-section" id="tipsSection" style="display: none;">
+                <h3><i class="fas fa-star icon"></i> 解题技巧</h3>
+                <p id="tipsContent" style="color: var(--text-secondary); line-height: 1.8;"></p>
+            </div>
+            
+            <!-- 操作按钮 -->
+            <div class="answer-actions">
+                <button class="btn btn-secondary" id="addToWrongBtn">
+                    <i class="fas fa-book"></i>
+                    加入错题本
+                </button>
+                <button class="btn btn-ghost" onclick="location.reload()">
+                    <i class="fas fa-redo"></i>
+                    继续提问
+                </button>
+            </div>
+        </div>
+        
+        <!-- 加载状态 -->
+        <div class="card" id="loadingCard" style="display: none;">
+            <div class="loading" style="padding: 60px;">
+                <div class="loading-spinner"></div>
+                <span class="loading-text">AI正在分析题目...</span>
+            </div>
+        </div>
+        
+        <!-- 初始提示 -->
+        <div class="card" id="emptyCard">
+            <div class="empty-state">
+                <div class="empty-icon">🤔</div>
+                <p class="empty-title">等待你的题目</p>
+                <p class="empty-text">上传图片或输入题目内容，开始解答</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentQuestionId = null;
+
+// 学科选择
+const subjectOptions = document.querySelectorAll('.subject-option');
+const subjectInput = document.getElementById('subjectInput');
+
+subjectOptions.forEach(option => {
+    option.addEventListener('click', () => {
+        subjectOptions.forEach(o => o.classList.remove('active'));
+        option.classList.add('active');
+        subjectInput.value = option.dataset.value;
+    });
+});
+
+// 图片上传
+const uploadArea = document.getElementById('uploadArea');
+const imageInput = document.getElementById('imageInput');
+const previewImage = document.getElementById('previewImage');
+
+uploadArea.addEventListener('click', () => imageInput.click());
+
+uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+});
+
+uploadArea.addEventListener('dragleave', () => {
+    uploadArea.classList.remove('dragover');
+});
+
+uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        imageInput.files = files;
+        showPreview(files[0]);
+    }
+});
+
+imageInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+        showPreview(e.target.files[0]);
+    }
+});
+
+function showPreview(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        previewImage.src = e.target.result;
+        previewImage.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+}
+
+// 表单提交
+async function submitQuestion() {
+    const content = document.getElementById('contentInput').value;
+    const image = imageInput.files[0];
+    
+    if (!content && !image) {
+        showToast('请输入题目内容或上传图片', 'warning');
+        return;
+    }
+    
+    const formData = new FormData(document.getElementById('questionForm'));
+    
+    // 显示加载状态
+    document.getElementById('emptyCard').style.display = 'none';
+    document.getElementById('answerCard').style.display = 'none';
+    document.getElementById('loadingCard').style.display = 'block';
+    document.getElementById('submitBtn').disabled = true;
+    
+    try {
+        const result = await api('/api/question', {
+            method: 'POST',
+            body: formData
+        });
+        
+        currentQuestionId = result.question_id;
+        
+        // 显示答案
+        document.getElementById('loadingCard').style.display = 'none';
+        document.getElementById('answerCard').style.display = 'block';
+        
+        document.getElementById('subjectTag').textContent = subjectInput.value;
+        document.getElementById('finalAnswer').innerHTML = renderMarkdown(result.answer);
+        
+        // 步骤（支持Markdown）
+        const stepsList = document.getElementById('stepsList');
+        if (result.steps && result.steps.length > 0) {
+            stepsList.innerHTML = result.steps.map((step, i) => `
+                <li class="step-item">
+                    <span class="step-number">${i + 1}</span>
+                    <div class="step-content">${renderMarkdown(step)}</div>
+                </li>
+            `).join('');
+        } else {
+            stepsList.innerHTML = '<li class="step-item"><div class="step-content">暂无详细步骤</div></li>';
+        }
+        
+        // 知识点
+        const knowledgeTags = document.getElementById('knowledgeTags');
+        if (result.knowledge_points && result.knowledge_points.length > 0) {
+            knowledgeTags.innerHTML = result.knowledge_points.map(kp => 
+                `<span class="tag">${kp}</span>`
+            ).join('');
+        } else {
+            knowledgeTags.innerHTML = '<span class="tag">通用</span>';
+        }
+        
+        // 技巧（支持Markdown）
+        if (result.tips) {
+            document.getElementById('tipsSection').style.display = 'block';
+            document.getElementById('tipsContent').innerHTML = renderMarkdown(result.tips);
+        }
+        
+        showToast('解答完成！');
+        
+    } catch (error) {
+        document.getElementById('loadingCard').style.display = 'none';
+        document.getElementById('emptyCard').style.display = 'block';
+    }
+    
+    document.getElementById('submitBtn').disabled = false;
+}
+
+// 加入错题本
+document.getElementById('addToWrongBtn').addEventListener('click', async () => {
+    if (!currentQuestionId) return;
+    
+    try {
+        await api('/api/wrong-book/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question_id: currentQuestionId })
+        });
+        showToast('已加入错题本！');
+    } catch (error) {
+        // 错误已处理
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,156 @@
+{% extends "layout.html" %}
+
+{% block title %}个人中心 - 智慧教育平台{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">👤 个人中心</h1>
+    <p class="page-subtitle">管理你的个人信息和学习偏好</p>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: var(--spacing-xl);">
+    <!-- 头像卡片 -->
+    <div class="card" style="text-align: center;">
+        <div style="width: 120px; height: 120px; margin: 0 auto var(--spacing-xl); background: linear-gradient(135deg, var(--purple) 0%, var(--pink) 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 48px; color: white; font-weight: 600;" id="avatarLetter">
+            {{ user.username[0] | upper }}
+        </div>
+        <h2 style="margin-bottom: var(--spacing-sm);" id="displayUsername">{{ user.username }}</h2>
+        <p style="color: var(--text-secondary);" id="displayGrade">加载中...</p>
+        
+        <div style="margin-top: var(--spacing-xl); padding-top: var(--spacing-xl); border-top: 1px solid var(--border);">
+            <div style="display: flex; justify-content: space-around;">
+                <div>
+                    <div style="font-size: 24px; font-weight: 700; color: var(--primary);" id="profileQuestions">-</div>
+                    <div style="font-size: 13px; color: var(--text-secondary);">解答题目</div>
+                </div>
+                <div>
+                    <div style="font-size: 24px; font-weight: 700; color: var(--success);" id="profileEssays">-</div>
+                    <div style="font-size: 13px; color: var(--text-secondary);">批改作文</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 信息编辑 -->
+    <div class="card">
+        <h3 class="card-title" style="margin-bottom: var(--spacing-xl);">编辑信息</h3>
+        
+        <form id="profileForm">
+            <div class="input-group">
+                <label for="email">邮箱</label>
+                <input type="email" class="input" id="email" name="email" placeholder="用于找回密码">
+            </div>
+            
+            <div class="input-group">
+                <label for="grade">年级</label>
+                <select class="input" id="grade" name="grade">
+                    <option value="">选择年级</option>
+                    <option value="小学一年级">小学一年级</option>
+                    <option value="小学二年级">小学二年级</option>
+                    <option value="小学三年级">小学三年级</option>
+                    <option value="小学四年级">小学四年级</option>
+                    <option value="小学五年级">小学五年级</option>
+                    <option value="小学六年级">小学六年级</option>
+                    <option value="初中一年级">初中一年级</option>
+                    <option value="初中二年级">初中二年级</option>
+                    <option value="初中三年级">初中三年级</option>
+                    <option value="高中一年级">高中一年级</option>
+                    <option value="高中二年级">高中二年级</option>
+                    <option value="高中三年级">高中三年级</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label>偏好学科</label>
+                <div class="subject-select" id="subjectSelect">
+                    <span class="subject-option" data-value="数学">数学</span>
+                    <span class="subject-option" data-value="语文">语文</span>
+                    <span class="subject-option" data-value="英语">英语</span>
+                    <span class="subject-option" data-value="物理">物理</span>
+                    <span class="subject-option" data-value="化学">化学</span>
+                    <span class="subject-option" data-value="生物">生物</span>
+                </div>
+                <input type="hidden" id="subjects" name="subjects">
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+                <i class="fas fa-save"></i>
+                保存修改
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let selectedSubjects = [];
+
+// 加载用户信息
+async function loadProfile() {
+    try {
+        const profile = await api('/api/profile');
+        
+        document.getElementById('email').value = profile.email || '';
+        document.getElementById('grade').value = profile.grade || '';
+        document.getElementById('displayGrade').textContent = profile.grade || '未设置年级';
+        
+        // 学科
+        if (profile.subjects) {
+            selectedSubjects = profile.subjects.split(',').filter(s => s);
+            document.querySelectorAll('.subject-option').forEach(opt => {
+                if (selectedSubjects.includes(opt.dataset.value)) {
+                    opt.classList.add('active');
+                }
+            });
+            document.getElementById('subjects').value = profile.subjects;
+        }
+        
+        // 加载统计
+        const stats = await api('/api/statistics');
+        document.getElementById('profileQuestions').textContent = stats.total_questions;
+        document.getElementById('profileEssays').textContent = stats.essay_count;
+        
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// 学科选择
+document.querySelectorAll('.subject-option').forEach(option => {
+    option.addEventListener('click', () => {
+        const value = option.dataset.value;
+        if (option.classList.contains('active')) {
+            option.classList.remove('active');
+            selectedSubjects = selectedSubjects.filter(s => s !== value);
+        } else {
+            option.classList.add('active');
+            selectedSubjects.push(value);
+        }
+        document.getElementById('subjects').value = selectedSubjects.join(',');
+    });
+});
+
+// 保存
+document.getElementById('profileForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    
+    try {
+        await api('/api/profile', {
+            method: 'POST',
+            body: formData
+        });
+        showToast('保存成功！');
+        
+        // 更新显示
+        document.getElementById('displayGrade').textContent = formData.get('grade') || '未设置年级';
+    } catch (error) {
+        // 错误已处理
+    }
+});
+
+loadProfile();
+</script>
+{% endblock %}

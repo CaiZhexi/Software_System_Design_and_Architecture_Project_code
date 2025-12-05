@@ -1,0 +1,244 @@
+{% extends "layout.html" %}
+
+{% block title %}作文批改 - 智慧教育平台{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">✍️ 作文批改</h1>
+    <p class="page-subtitle">提交你的作文，获得专业的批改和建议</p>
+</div>
+
+<div class="essay-container">
+    <!-- 输入区域 -->
+    <div>
+        <div class="card">
+            <h3 class="card-title" style="margin-bottom: var(--spacing-lg);">提交作文</h3>
+            
+            <form id="essayForm">
+                <!-- 作文类型 -->
+                <div class="input-group">
+                    <label>作文类型</label>
+                    <div class="essay-type-select" id="typeSelect">
+                        <span class="subject-option active" data-value="记叙文">📖 记叙文</span>
+                        <span class="subject-option" data-value="议论文">💭 议论文</span>
+                        <span class="subject-option" data-value="说明文">📋 说明文</span>
+                        <span class="subject-option" data-value="应用文">📝 应用文</span>
+                    </div>
+                    <input type="hidden" name="essay_type" id="typeInput" value="记叙文">
+                </div>
+                
+                <!-- 标题 -->
+                <div class="input-group">
+                    <label for="title">作文标题</label>
+                    <input type="text" class="input" name="title" id="title" placeholder="输入作文标题" required>
+                </div>
+                
+                <!-- 内容 -->
+                <div class="input-group">
+                    <label for="content">作文内容</label>
+                    <textarea class="input" name="content" id="content" placeholder="粘贴或输入你的作文内容..." required style="min-height: 300px;"></textarea>
+                    <div style="display: flex; justify-content: space-between; margin-top: var(--spacing-sm); color: var(--text-secondary); font-size: 13px;">
+                        <span>建议字数：500-1000字</span>
+                        <span>当前字数：<span id="wordCount">0</span></span>
+                    </div>
+                </div>
+                
+                <button type="button" class="btn btn-primary btn-lg" style="width: 100%;" id="submitBtn" onclick="submitEssay()">
+                    <i class="fas fa-paper-plane"></i>
+                    提交批改
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 结果区域 -->
+    <div>
+        <div class="card" id="resultCard" style="display: none;">
+            <div class="card-header">
+                <h3 class="card-title">📊 批改结果</h3>
+            </div>
+            
+            <!-- 总分 -->
+            <div class="score-circle">
+                <span class="score-value" id="overallScore">0</span>
+                <span class="score-label">综合评分</span>
+            </div>
+            
+            <!-- 结构评价 -->
+            <div class="feedback-section">
+                <div class="feedback-header">
+                    <span class="feedback-title">
+                        <i class="fas fa-sitemap" style="color: var(--primary);"></i>
+                        文章结构
+                    </span>
+                    <span class="feedback-score" id="structureScore">-</span>
+                </div>
+                <p id="structureFeedback" style="color: var(--text-secondary); line-height: 1.8;"></p>
+            </div>
+            
+            <!-- 语法评价 -->
+            <div class="feedback-section">
+                <div class="feedback-header">
+                    <span class="feedback-title">
+                        <i class="fas fa-spell-check" style="color: var(--secondary);"></i>
+                        语法表达
+                    </span>
+                    <span class="feedback-score" id="grammarScore">-</span>
+                </div>
+                <p id="grammarFeedback" style="color: var(--text-secondary); line-height: 1.8;"></p>
+            </div>
+            
+            <!-- 词汇评价 -->
+            <div class="feedback-section">
+                <div class="feedback-header">
+                    <span class="feedback-title">
+                        <i class="fas fa-font" style="color: var(--purple);"></i>
+                        词汇运用
+                    </span>
+                    <span class="feedback-score" id="vocabularyScore">-</span>
+                </div>
+                <p id="vocabularyFeedback" style="color: var(--text-secondary); line-height: 1.8;"></p>
+            </div>
+            
+            <!-- 总体评价 -->
+            <div class="feedback-section" style="background: linear-gradient(135deg, rgba(255,107,53,0.1) 0%, rgba(78,205,196,0.1) 100%);">
+                <div class="feedback-header">
+                    <span class="feedback-title">
+                        <i class="fas fa-star" style="color: var(--accent);"></i>
+                        总体评价
+                    </span>
+                </div>
+                <p id="overallFeedback" style="color: var(--text-primary); line-height: 1.8; font-weight: 500;"></p>
+            </div>
+            
+            <!-- 修改建议 -->
+            <div style="margin-top: var(--spacing-lg);">
+                <h4 style="margin-bottom: var(--spacing-md); display: flex; align-items: center; gap: var(--spacing-sm);">
+                    <i class="fas fa-lightbulb" style="color: var(--warning);"></i>
+                    修改建议
+                </h4>
+                <ul id="suggestionsList" style="list-style: none;"></ul>
+            </div>
+            
+            <button class="btn btn-secondary" style="width: 100%; margin-top: var(--spacing-xl);" onclick="location.reload()">
+                <i class="fas fa-redo"></i>
+                再次批改
+            </button>
+        </div>
+        
+        <!-- 加载状态 -->
+        <div class="card" id="loadingCard" style="display: none;">
+            <div class="loading" style="padding: 80px;">
+                <div class="loading-spinner"></div>
+                <span class="loading-text">AI正在批改作文...</span>
+            </div>
+        </div>
+        
+        <!-- 初始提示 -->
+        <div class="card" id="emptyCard">
+            <div class="empty-state">
+                <div class="empty-icon">📝</div>
+                <p class="empty-title">提交作文开始批改</p>
+                <p class="empty-text">AI会从结构、语法、词汇等多个维度进行评价</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 类型选择
+const typeOptions = document.querySelectorAll('.essay-type-select .subject-option');
+const typeInput = document.getElementById('typeInput');
+
+typeOptions.forEach(option => {
+    option.addEventListener('click', () => {
+        typeOptions.forEach(o => o.classList.remove('active'));
+        option.classList.add('active');
+        typeInput.value = option.dataset.value;
+    });
+});
+
+// 字数统计
+const contentInput = document.getElementById('content');
+const wordCount = document.getElementById('wordCount');
+
+contentInput.addEventListener('input', () => {
+    wordCount.textContent = contentInput.value.length;
+});
+
+// 表单提交
+async function submitEssay() {
+    const content = contentInput.value;
+    if (content.length < 100) {
+        showToast('作文内容太短，请至少输入100字', 'warning');
+        return;
+    }
+    
+    const formData = new FormData(document.getElementById('essayForm'));
+    
+    // 显示加载状态
+    document.getElementById('emptyCard').style.display = 'none';
+    document.getElementById('resultCard').style.display = 'none';
+    document.getElementById('loadingCard').style.display = 'block';
+    document.getElementById('submitBtn').disabled = true;
+    
+    try {
+        const result = await api('/api/essay', {
+            method: 'POST',
+            body: formData
+        });
+        
+        // 显示结果
+        document.getElementById('loadingCard').style.display = 'none';
+        document.getElementById('resultCard').style.display = 'block';
+        
+        // 总分
+        document.getElementById('overallScore').textContent = result.overall_score || 0;
+        
+        // 结构
+        if (result.structure) {
+            document.getElementById('structureScore').textContent = result.structure.score + '分';
+            document.getElementById('structureFeedback').textContent = result.structure.feedback || '';
+        }
+        
+        // 语法
+        if (result.grammar) {
+            document.getElementById('grammarScore').textContent = result.grammar.score + '分';
+            document.getElementById('grammarFeedback').textContent = result.grammar.feedback || '';
+        }
+        
+        // 词汇
+        if (result.vocabulary) {
+            document.getElementById('vocabularyScore').textContent = result.vocabulary.score + '分';
+            document.getElementById('vocabularyFeedback').textContent = result.vocabulary.feedback || '';
+        }
+        
+        // 总体评价
+        document.getElementById('overallFeedback').textContent = result.overall_feedback || '';
+        
+        // 建议
+        const suggestionsList = document.getElementById('suggestionsList');
+        if (result.suggestions && result.suggestions.length > 0) {
+            suggestionsList.innerHTML = result.suggestions.map((s, i) => `
+                <li style="display: flex; gap: var(--spacing-sm); margin-bottom: var(--spacing-sm); padding: var(--spacing-md); background: var(--bg-primary); border-radius: var(--radius-sm);">
+                    <span style="color: var(--primary); font-weight: 600;">${i + 1}.</span>
+                    <span>${s}</span>
+                </li>
+            `).join('');
+        } else {
+            suggestionsList.innerHTML = '<li style="color: var(--text-secondary);">暂无具体建议</li>';
+        }
+        
+        showToast('批改完成！');
+        
+    } catch (error) {
+        document.getElementById('loadingCard').style.display = 'none';
+        document.getElementById('emptyCard').style.display = 'block';
+    }
+    
+    document.getElementById('submitBtn').disabled = false;
+}
+</script>
+{% endblock %}

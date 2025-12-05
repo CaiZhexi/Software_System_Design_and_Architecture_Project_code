@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block body %}
+<!-- 导航栏 -->
+<nav class="navbar">
+    <div class="container">
+        <a href="/" class="navbar-brand">
+            <div class="navbar-logo">🎓</div>
+            <span class="navbar-title">智慧教育</span>
+        </a>
+        
+        <div class="navbar-nav">
+            <a href="/" class="nav-link {% if request.url.path == '/' %}active{% endif %}">
+                <i class="fas fa-home icon"></i>
+                首页
+            </a>
+            <a href="/question" class="nav-link {% if request.url.path == '/question' %}active{% endif %}">
+                <i class="fas fa-question-circle icon"></i>
+                智能问答
+            </a>
+            <a href="/essay" class="nav-link {% if request.url.path == '/essay' %}active{% endif %}">
+                <i class="fas fa-pen-fancy icon"></i>
+                作文批改
+            </a>
+            <a href="/chat" class="nav-link {% if request.url.path == '/chat' %}active{% endif %}">
+                <i class="fas fa-comments icon"></i>
+                学习助手
+            </a>
+        </div>
+        
+        <div class="navbar-user">
+            <a href="/profile" class="user-avatar">{{ user.username[0] | upper }}</a>
+        </div>
+    </div>
+</nav>
+
+<!-- 主体布局 -->
+<div class="app-layout">
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+        <nav class="sidebar-nav">
+            <a href="/" class="sidebar-link {% if request.url.path == '/' %}active{% endif %}">
+                <i class="fas fa-home icon"></i>
+                学习中心
+            </a>
+            <a href="/question" class="sidebar-link {% if request.url.path == '/question' %}active{% endif %}">
+                <i class="fas fa-camera icon"></i>
+                拍照解题
+            </a>
+            <a href="/essay" class="sidebar-link {% if request.url.path == '/essay' %}active{% endif %}">
+                <i class="fas fa-pen-fancy icon"></i>
+                作文批改
+            </a>
+            <a href="/chat" class="sidebar-link {% if request.url.path == '/chat' %}active{% endif %}">
+                <i class="fas fa-robot icon"></i>
+                聊天助手
+            </a>
+            <a href="/wrong-book" class="sidebar-link {% if request.url.path == '/wrong-book' %}active{% endif %}">
+                <i class="fas fa-book icon"></i>
+                错题本
+            </a>
+            <a href="/statistics" class="sidebar-link {% if request.url.path == '/statistics' %}active{% endif %}">
+                <i class="fas fa-chart-line icon"></i>
+                学习统计
+            </a>
+            <a href="/profile" class="sidebar-link {% if request.url.path == '/profile' %}active{% endif %}">
+                <i class="fas fa-user icon"></i>
+                个人中心
+            </a>
+            <a href="#" class="sidebar-link" onclick="logout()">
+                <i class="fas fa-sign-out-alt icon"></i>
+                退出登录
+            </a>
+        </nav>
+    </aside>
+    
+    <!-- 主内容区 -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+</div>
+
+<script>
+async function logout() {
+    await api('/api/logout', { method: 'POST' });
+    window.location.href = '/login';
+}
+</script>
+{% endblock %}
