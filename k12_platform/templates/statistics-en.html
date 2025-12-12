@@ -1,77 +1,77 @@
-{% extends "layout.html" %}
+{% extends "layout-en.html" %}
 
-{% block title %}学习统计 - 智慧教育平台{% endblock %}
+{% block title %}Statistics - Smart Education Platform{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1 class="page-title">📊 学习统计</h1>
-    <p class="page-subtitle">了解你的学习情况，发现进步空间</p>
+    <h1 class="page-title">📊 Learning Statistics</h1>
+    <p class="page-subtitle">Understand your learning progress and discover areas for improvement</p>
 </div>
 
-<!-- 统计卡片 -->
+<!-- Statistics cards -->
 <div class="stats-grid" id="statsGrid">
     <div class="stat-card">
         <div class="stat-icon primary">📝</div>
         <div class="stat-value" id="totalQuestions">-</div>
-        <div class="stat-label">总题目数</div>
+        <div class="stat-label">Total Questions</div>
     </div>
     <div class="stat-card">
         <div class="stat-icon success">✅</div>
         <div class="stat-value" id="accuracyRate">-</div>
-        <div class="stat-label">正确率</div>
+        <div class="stat-label">Accuracy Rate</div>
     </div>
     <div class="stat-card">
         <div class="stat-icon warning">📕</div>
         <div class="stat-value" id="wrongCount">-</div>
-        <div class="stat-label">待掌握错题</div>
+        <div class="stat-label">Pending Review</div>
     </div>
     <div class="stat-card">
         <div class="stat-icon info">✍️</div>
         <div class="stat-value" id="essayCount">-</div>
-        <div class="stat-label">作文批改</div>
+        <div class="stat-label">Essays Reviewed</div>
     </div>
 </div>
 
 <div class="charts-row">
-    <!-- 作文分数 -->
+    <!-- Learning overview -->
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title">📈 学习概览</h3>
+            <h3 class="card-title">📈 Learning Overview</h3>
         </div>
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--spacing-lg);">
             <div style="text-align: center; padding: var(--spacing-xl); background: linear-gradient(135deg, rgba(255,107,53,0.1) 0%, rgba(255,107,53,0.05) 100%); border-radius: var(--radius-lg);">
                 <div style="font-size: 42px; font-weight: 700; color: var(--primary);" id="recentQuestions">-</div>
-                <div style="color: var(--text-secondary);">本周做题</div>
+                <div style="color: var(--text-secondary);">This Week</div>
             </div>
             <div style="text-align: center; padding: var(--spacing-xl); background: linear-gradient(135deg, rgba(0,184,148,0.1) 0%, rgba(0,184,148,0.05) 100%); border-radius: var(--radius-lg);">
                 <div style="font-size: 42px; font-weight: 700; color: var(--success);" id="masteredCount">-</div>
-                <div style="color: var(--text-secondary);">已掌握</div>
+                <div style="color: var(--text-secondary);">Mastered</div>
             </div>
             <div style="text-align: center; padding: var(--spacing-xl); background: linear-gradient(135deg, rgba(123,104,238,0.1) 0%, rgba(123,104,238,0.05) 100%); border-radius: var(--radius-lg);">
                 <div style="font-size: 42px; font-weight: 700; color: var(--purple);" id="avgEssayScore">-</div>
-                <div style="color: var(--text-secondary);">作文平均分</div>
+                <div style="color: var(--text-secondary);">Avg Essay Score</div>
             </div>
         </div>
     </div>
     
-    <!-- 薄弱知识点 -->
+    <!-- Weak points -->
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title">⚠️ 薄弱知识点</h3>
+            <h3 class="card-title">⚠️ Weak Points</h3>
         </div>
         <ul class="weak-points-list" id="weakPointsList">
             <li class="weak-point-item">
-                <span class="weak-point-name">加载中...</span>
+                <span class="weak-point-name">Loading...</span>
             </li>
         </ul>
     </div>
 </div>
 
-<!-- 学科成绩雷达图 -->
+<!-- Subject radar chart -->
 <div class="card" style="margin-top: var(--spacing-xl);">
     <div class="card-header">
-        <h3 class="card-title">📊 学科能力分析</h3>
-        <p style="color: var(--text-secondary); font-size: 14px; margin-top: 4px;">基于历史做题数据分析各学科掌握情况</p>
+        <h3 class="card-title">📊 Subject Performance Analysis</h3>
+        <p style="color: var(--text-secondary); font-size: 14px; margin-top: 4px;">Analysis based on historical question data for each subject</p>
     </div>
     <div style="padding: var(--spacing-xl); display: flex; justify-content: center; align-items: center;">
         <div style="width: 100%; max-width: 600px; position: relative; height: 500px;">
@@ -80,19 +80,19 @@
     </div>
 </div>
 
-<!-- 推荐练习 -->
+<!-- Recommended practice -->
 <div class="card" style="margin-top: var(--spacing-xl);">
     <div class="card-header">
-        <h3 class="card-title">🎯 推荐练习</h3>
+        <h3 class="card-title">🎯 Recommended Practice</h3>
         <button class="btn btn-ghost btn-sm" onclick="loadRecommendations()">
             <i class="fas fa-sync"></i>
-            换一批
+            Refresh
         </button>
     </div>
     <div id="recommendList">
         <div class="loading">
             <div class="loading-spinner"></div>
-            <span class="loading-text">生成推荐中...</span>
+            <span class="loading-text">Generating recommendations...</span>
         </div>
     </div>
 </div>
@@ -100,7 +100,7 @@
 
 {% block scripts %}
 <script>
-// 加载统计数据
+// Load statistics
 async function loadStats() {
     try {
         const stats = await api('/api/statistics');
@@ -113,30 +113,30 @@ async function loadStats() {
         document.getElementById('masteredCount').textContent = stats.mastered_count;
         document.getElementById('avgEssayScore').textContent = stats.avg_essay_score !== undefined ? stats.avg_essay_score : '-';
         
-        // 薄弱知识点
+        // Weak points
         const weakList = document.getElementById('weakPointsList');
         if (stats.weak_points.length > 0) {
             weakList.innerHTML = stats.weak_points.map(wp => `
                 <li class="weak-point-item">
                     <span class="weak-point-name">${wp.name}</span>
-                    <span class="weak-point-count">${wp.count}题</span>
+                    <span class="weak-point-count">${wp.count} questions</span>
                 </li>
             `).join('');
         } else {
-            weakList.innerHTML = '<li class="weak-point-item"><span class="weak-point-name" style="color: var(--success);">暂无薄弱知识点 👍</span></li>';
+            weakList.innerHTML = '<li class="weak-point-item"><span class="weak-point-name" style="color: var(--success);">No weak points 👍</span></li>';
         }
     } catch (error) {
         console.error(error);
     }
 }
 
-// 加载推荐
+// Load recommendations
 async function loadRecommendations() {
     const container = document.getElementById('recommendList');
     container.innerHTML = `
         <div class="loading">
             <div class="loading-spinner"></div>
-            <span class="loading-text">生成推荐中...</span>
+            <span class="loading-text">Generating recommendations...</span>
         </div>
     `;
     
@@ -147,7 +147,7 @@ async function loadRecommendations() {
         if (!exercises || exercises.length === 0) {
             container.innerHTML = `
                 <div class="empty-state" style="padding: var(--spacing-lg);">
-                    <p class="empty-text">暂无推荐练习，继续努力学习吧！</p>
+                    <p class="empty-text">No recommendations available, keep learning!</p>
                 </div>
             `;
             return;
@@ -165,15 +165,15 @@ async function loadRecommendations() {
                             </div>
                         ` : ''}
                         <details>
-                            <summary style="cursor: pointer; color: var(--primary); font-weight: 500;">查看答案</summary>
+                            <summary style="cursor: pointer; color: var(--primary); font-weight: 500;">View Answer</summary>
                             <div style="margin-top: var(--spacing-md); padding: var(--spacing-md); background: var(--bg-primary); border-radius: var(--radius-md);">
-                                <p><strong>答案：</strong>${ex.answer}</p>
+                                <p><strong>Answer:</strong> ${ex.answer}</p>
                                 <p style="margin-top: var(--spacing-sm); color: var(--text-secondary);">${ex.explanation}</p>
                             </div>
                         </details>
                         <div style="margin-top: var(--spacing-sm);">
                             <span class="tag tag-info">${ex.knowledge_point}</span>
-                            <span class="tag" style="margin-left: var(--spacing-xs);">难度 ${'⭐'.repeat(ex.difficulty || 3)}</span>
+                            <span class="tag" style="margin-left: var(--spacing-xs);">Difficulty ${'⭐'.repeat(ex.difficulty || 3)}</span>
                         </div>
                     </div>
                 </div>
@@ -182,23 +182,23 @@ async function loadRecommendations() {
     } catch (error) {
         container.innerHTML = `
             <div class="empty-state" style="padding: var(--spacing-lg);">
-                <p class="empty-text">加载推荐失败，请稍后重试</p>
+                <p class="empty-text">Failed to load recommendations, please try again later</p>
             </div>
         `;
     }
 }
 
-// 初始化学科成绩雷达图
+// Initialize subject radar chart
 function initSubjectRadarChart() {
     const ctx = document.getElementById('subjectRadarChart');
     if (!ctx) return;
     
-    // 静态示例数据 - 8个学科的预测分数
+    // Static example data - 8 subjects' predicted scores
     const subjectData = {
-        labels: ['语文', '数学', '英语', '物理', '化学', '生物', '历史', '地理'],
+        labels: ['Chinese', 'Math', 'English', 'Physics', 'Chemistry', 'Biology', 'History', 'Geography'],
         datasets: [{
-            label: '当前水平',
-            data: [85, 92, 88, 78, 82, 90, 86, 84], // 示例数据，满分100
+            label: 'Current Level',
+            data: [85, 92, 88, 78, 82, 90, 86, 84], // Example data, max 100
             fill: true,
             backgroundColor: 'rgba(54, 162, 235, 0.2)',
             borderColor: 'rgb(54, 162, 235)',
@@ -269,7 +269,7 @@ function initSubjectRadarChart() {
                     displayColors: true,
                     callbacks: {
                         label: function(context) {
-                            return context.dataset.label + ': ' + context.parsed.r + '分';
+                            return context.dataset.label + ': ' + context.parsed.r + ' pts';
                         }
                     }
                 }
@@ -280,7 +280,7 @@ function initSubjectRadarChart() {
     new Chart(ctx, config);
 }
 
-// 直接执行（脚本在DOM底部，此时DOM已准备好）
+// Execute directly (script is at bottom of DOM, so DOM is ready)
 loadStats();
 loadRecommendations();
 initSubjectRadarChart();

@@ -1,0 +1,264 @@
+{% extends "layout-en.html" %}
+
+{% block title %}Practice - Smart Education Platform{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">📝 Practice</h1>
+    <p class="page-subtitle">Focus on practice, consolidate knowledge</p>
+</div>
+
+<!-- Practice area -->
+<div class="practice-container" style="max-width: 900px; margin: 0 auto;">
+    <!-- Question card -->
+    <div class="card" id="questionCard">
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            <span class="loading-text">Loading...</span>
+        </div>
+    </div>
+    
+    <!-- Answer area -->
+    <div class="card" id="answerCard" style="display: none; margin-top: var(--spacing-xl);">
+        <h3 style="margin-bottom: var(--spacing-lg);">💭 Your Answer</h3>
+        <textarea 
+            class="input" 
+            id="userAnswer" 
+            placeholder="Enter your answer..." 
+            style="min-height: 150px; font-size: 16px;"
+        ></textarea>
+        <div style="display: flex; gap: var(--spacing-md); margin-top: var(--spacing-lg);">
+            <button class="btn btn-primary" onclick="submitAnswer()" style="flex: 1;">
+                <i class="fas fa-check"></i>
+                Submit Answer
+            </button>
+            <button class="btn btn-secondary" onclick="showHint()" style="flex: 1;">
+                <i class="fas fa-lightbulb"></i>
+                Get Hint
+            </button>
+        </div>
+    </div>
+    
+    <!-- Hint -->
+    <div class="card" id="hintCard" style="display: none; margin-top: var(--spacing-xl); background: linear-gradient(135deg, rgba(255,193,7,0.1) 0%, rgba(255,193,7,0.05) 100%); border-left: 4px solid var(--warning);">
+        <h3 style="margin-bottom: var(--spacing-md);">💡 Solution Hint</h3>
+        <div id="hintContent" style="color: var(--text-secondary); line-height: 1.8;"></div>
+    </div>
+    
+    <!-- Knowledge explanation -->
+    <div class="card" id="knowledgeCard" style="margin-top: var(--spacing-xl); background: linear-gradient(135deg, rgba(123,104,238,0.1) 0%, rgba(123,104,238,0.05) 100%); border-left: 4px solid var(--purple);">
+        <h3 style="margin-bottom: var(--spacing-md);">📚 Key Knowledge Points</h3>
+        <div id="knowledgeContent"></div>
+    </div>
+    
+    <!-- Answer comparison -->
+    <div class="card" id="resultCard" style="display: none; margin-top: var(--spacing-xl);">
+        <h3 style="margin-bottom: var(--spacing-lg);">📊 Answer Comparison</h3>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-lg); margin-bottom: var(--spacing-xl);">
+            <div>
+                <h4 style="color: var(--text-secondary); margin-bottom: var(--spacing-sm);">Your Answer</h4>
+                <div id="userAnswerDisplay" style="padding: var(--spacing-md); background: var(--bg-primary); border-radius: var(--radius-md); min-height: 100px;"></div>
+            </div>
+            <div>
+                <h4 style="color: var(--success); margin-bottom: var(--spacing-sm);">Correct Answer</h4>
+                <div id="correctAnswerDisplay" style="padding: var(--spacing-md); background: var(--bg-primary); border-radius: var(--radius-md); min-height: 100px;"></div>
+            </div>
+        </div>
+        
+        <!-- AI evaluation -->
+        <div id="aiEvaluation" style="padding: var(--spacing-lg); background: var(--bg-primary); border-radius: var(--radius-md); border-left: 4px solid var(--info);">
+            <h4 style="margin-bottom: var(--spacing-md);">🤖 AI Evaluation</h4>
+            <div id="evaluationContent" style="color: var(--text-secondary); line-height: 1.8;"></div>
+        </div>
+        
+        <div style="display: flex; gap: var(--spacing-md); margin-top: var(--spacing-xl);">
+            <button class="btn btn-secondary" onclick="retryQuestion()" style="flex: 1;">
+                <i class="fas fa-redo"></i>
+                Retry
+            </button>
+            <button class="btn btn-primary" onclick="backToWrongBook()" style="flex: 1;">
+                <i class="fas fa-arrow-left"></i>
+                Back to Wrong Book
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentQuestion = null;
+let wrongId = null;
+
+// Get URL parameter
+function getQueryParam(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+}
+
+// Load question
+async function loadQuestion() {
+    wrongId = getQueryParam('id');
+    if (!wrongId) {
+        showToast('Question ID not found', 'error');
+        setTimeout(() => window.location.href = '/wrong-book-en', 1500);
+        return;
+    }
+    
+    try {
+        const wrongs = await api('/api/wrong-book');
+        currentQuestion = wrongs.find(w => w.id == wrongId);
+        
+        if (!currentQuestion) {
+            showToast('Question does not exist', 'error');
+            setTimeout(() => window.location.href = '/wrong-book-en', 1500);
+            return;
+        }
+        
+        renderQuestion();
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// Render question
+function renderQuestion() {
+    const questionCard = document.getElementById('questionCard');
+    const answerCard = document.getElementById('answerCard');
+    
+    questionCard.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg); padding-bottom: var(--spacing-md); border-bottom: 2px solid var(--border);">
+            <span class="tag tag-primary" style="font-size: 14px;">${currentQuestion.subject || 'Uncategorized'}</span>
+            <span style="color: var(--text-secondary); font-size: 14px;">Practice count: ${currentQuestion.practice_count || 0}</span>
+        </div>
+        
+        <h2 style="margin-bottom: var(--spacing-xl); font-size: 20px; line-height: 1.8;">
+            ${currentQuestion.content || 'Image question'}
+        </h2>
+        
+        ${currentQuestion.image_url ? `
+            <img src="${currentQuestion.image_url}" style="max-width: 100%; border-radius: var(--radius-md); margin-bottom: var(--spacing-xl);">
+        ` : ''}
+        
+        ${currentQuestion.knowledge_point ? `
+            <div style="padding: var(--spacing-md); background: var(--bg-primary); border-radius: var(--radius-md); margin-top: var(--spacing-lg);">
+                <span style="color: var(--text-secondary); font-size: 14px;">💡 Knowledge point:</span>
+                <strong>${currentQuestion.knowledge_point}</strong>
+            </div>
+        ` : ''}
+    `;
+    
+    answerCard.style.display = 'block';
+    renderKnowledge();
+}
+
+// Render knowledge explanation
+function renderKnowledge() {
+    const knowledgeContent = document.getElementById('knowledgeContent');
+    if (currentQuestion.steps && currentQuestion.steps.length > 0) {
+        knowledgeContent.innerHTML = `
+            <ul class="steps-list">
+                ${currentQuestion.steps.map((step, i) => `
+                    <li class="step-item">
+                        <span class="step-number">${i + 1}</span>
+                        <div class="step-content">${step}</div>
+                    </li>
+                `).join('')}
+            </ul>
+        `;
+    } else {
+        knowledgeContent.innerHTML = '<p style="color: var(--text-secondary);">No detailed steps available</p>';
+    }
+}
+
+// Show hint
+function showHint() {
+    const hintCard = document.getElementById('hintCard');
+    const hintContent = document.getElementById('hintContent');
+    
+    if (hintCard.style.display === 'block') {
+        hintCard.style.display = 'none';
+        return;
+    }
+    
+    // Extract first step as hint
+    if (currentQuestion.steps && currentQuestion.steps.length > 0) {
+        hintContent.innerHTML = `
+            <p><strong>First Step Hint:</strong></p>
+            <p>${currentQuestion.steps[0]}</p>
+            <p style="margin-top: var(--spacing-md); font-style: italic;">💡 Try thinking based on this hint, check the complete knowledge explanation below if you still can't solve it</p>
+        `;
+    } else {
+        hintContent.innerHTML = '<p>No hint available, please check the knowledge explanation below</p>';
+    }
+    
+    hintCard.style.display = 'block';
+}
+
+// Submit answer
+async function submitAnswer() {
+    const userAnswer = document.getElementById('userAnswer').value.trim();
+    
+    if (!userAnswer) {
+        showToast('Please enter your answer', 'warning');
+        return;
+    }
+    
+    // Display result card
+    const resultCard = document.getElementById('resultCard');
+    const userAnswerDisplay = document.getElementById('userAnswerDisplay');
+    const correctAnswerDisplay = document.getElementById('correctAnswerDisplay');
+    const evaluationContent = document.getElementById('evaluationContent');
+    
+    userAnswerDisplay.textContent = userAnswer;
+    correctAnswerDisplay.textContent = currentQuestion.answer;
+    
+    // Simple comparison
+    const isCorrect = userAnswer.toLowerCase().includes(currentQuestion.answer.toLowerCase()) ||
+                      currentQuestion.answer.toLowerCase().includes(userAnswer.toLowerCase());
+    
+    if (isCorrect) {
+        evaluationContent.innerHTML = `
+            <div style="color: var(--success); font-weight: 600; margin-bottom: var(--spacing-sm);">
+                ✅ Correct answer!
+            </div>
+            <p>Your answer matches the standard answer, which shows you have mastered this knowledge point. Keep it up!</p>
+        `;
+    } else {
+        evaluationContent.innerHTML = `
+            <div style="color: var(--warning); font-weight: 600; margin-bottom: var(--spacing-sm);">
+                ⚠️ Answer differs
+            </div>
+            <p>Your answer doesn't completely match the standard answer. Please review the knowledge explanation above to understand the solution approach.</p>
+        `;
+    }
+    
+    resultCard.style.display = 'block';
+    resultCard.scrollIntoView({ behavior: 'smooth' });
+    
+    // Record practice count
+    try {
+        await api(`/api/wrong-book/practice/${wrongId}`, { method: 'POST' });
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// Retry question
+function retryQuestion() {
+    document.getElementById('userAnswer').value = '';
+    document.getElementById('resultCard').style.display = 'none';
+    document.getElementById('hintCard').style.display = 'none';
+    document.getElementById('answerCard').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Back to wrong book
+function backToWrongBook() {
+    window.location.href = '/wrong-book-en';
+}
+
+// Execute on page load
+loadQuestion();
+</script>
+{% endblock %}

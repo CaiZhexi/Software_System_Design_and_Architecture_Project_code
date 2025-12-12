@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}智慧教育平台{% endblock %}</title>
+    <title>{% block title %}Smart Education Platform{% endblock %}</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Markdown渲染支持 -->
+    <!-- Markdown rendering support -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
-    <!-- 代码高亮 -->
+    <!-- Code highlighting -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <!-- Chart.js图表库 -->
+    <!-- Chart.js library -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     {% block head %}{% endblock %}
 </head>
@@ -21,7 +21,7 @@
     <div id="toast-container" class="toast-container"></div>
     
     <script>
-        // Toast 通知
+        // Toast notification
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -34,7 +34,7 @@
             setTimeout(() => toast.remove(), 3000);
         }
         
-        // Markdown渲染配置
+        // Markdown rendering configuration
         if (typeof marked !== 'undefined') {
             marked.setOptions({
                 highlight: function(code, lang) {
@@ -48,7 +48,7 @@
             });
         }
         
-        // Markdown渲染函数
+        // Markdown rendering function
         function renderMarkdown(text) {
             if (typeof marked !== 'undefined' && text) {
                 return marked.parse(text);
@@ -56,7 +56,7 @@
             return text ? text.replace(/\n/g, '<br>') : '';
         }
         
-        // API请求封装
+        // API request wrapper
         async function api(url, options = {}) {
             try {
                 const response = await fetch(url, {
@@ -67,7 +67,7 @@
                 });
                 const data = await response.json();
                 if (!response.ok) {
-                    throw new Error(data.detail || '请求失败');
+                    throw new Error(data.detail || 'Request failed');
                 }
                 return data;
             } catch (error) {

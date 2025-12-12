@@ -29,6 +29,10 @@
         </div>
         
         <div class="navbar-user">
+            <a href="#" onclick="switchLanguage('en')" class="btn btn-ghost btn-sm" style="margin-right: var(--spacing-md);">
+                <i class="fas fa-language"></i>
+                English
+            </a>
             <a href="/profile" class="user-avatar">{{ user.username[0] | upper }}</a>
         </div>
     </div>
@@ -84,6 +88,18 @@
 async function logout() {
     await api('/api/logout', { method: 'POST' });
     window.location.href = '/login';
+}
+
+function switchLanguage(lang) {
+    const currentPath = window.location.pathname;
+    if (lang === 'en') {
+        // 切换到英文版
+        if (currentPath === '/') {
+            window.location.href = '/en';
+        } else if (!currentPath.endsWith('-en')) {
+            window.location.href = currentPath + '-en';
+        }
+    }
 }
 </script>
 {% endblock %}

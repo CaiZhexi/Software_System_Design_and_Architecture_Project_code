@@ -1,0 +1,133 @@
+{% extends "base-en.html" %}
+
+{% block title %}Register - Smart Education Platform{% endblock %}
+
+{% block body %}
+<div style="position: absolute; top: 20px; right: 20px; z-index: 1000;">
+    <a href="/register" class="btn btn-ghost btn-sm">
+        <i class="fas fa-language"></i>
+        中文
+    </a>
+</div>
+<div class="auth-page">
+    <div class="auth-left">
+        <h1>🚀 Start Your Learning Journey</h1>
+        <p>
+            Register as a member<br>
+            Unlock all learning features<br>
+            Let AI be your personal teacher!
+        </p>
+        <div class="auth-decorations">
+            <div class="auth-decoration">🎯</div>
+            <div class="auth-decoration">💡</div>
+            <div class="auth-decoration">🏆</div>
+        </div>
+    </div>
+    
+    <div class="auth-right">
+        <div class="auth-card">
+            <h2>Create Account</h2>
+            <p class="subtitle">Fill in your information to start smart learning</p>
+            
+            <form class="auth-form" id="registerForm">
+                <div class="input-group">
+                    <label for="username">Username *</label>
+                    <input type="text" class="input" id="username" name="username" placeholder="Set a username" required>
+                </div>
+                
+                <div class="input-group">
+                    <label for="password">Password *</label>
+                    <input type="password" class="input" id="password" name="password" placeholder="Set password (at least 6 characters)" required minlength="6">
+                </div>
+                
+                <div class="input-group">
+                    <label for="email">Email</label>
+                    <input type="email" class="input" id="email" name="email" placeholder="Optional, for password recovery">
+                </div>
+                
+                <div class="input-group">
+                    <label for="grade">Grade</label>
+                    <select class="input" id="grade" name="grade">
+                        <option value="">Select grade</option>
+                        <option value="小学一年级">Elementary 1st Grade</option>
+                        <option value="小学二年级">Elementary 2nd Grade</option>
+                        <option value="小学三年级">Elementary 3rd Grade</option>
+                        <option value="小学四年级">Elementary 4th Grade</option>
+                        <option value="小学五年级">Elementary 5th Grade</option>
+                        <option value="小学六年级">Elementary 6th Grade</option>
+                        <option value="初中一年级">Middle School 7th Grade</option>
+                        <option value="初中二年级">Middle School 8th Grade</option>
+                        <option value="初中三年级">Middle School 9th Grade</option>
+                        <option value="高中一年级">High School 10th Grade</option>
+                        <option value="高中二年级">High School 11th Grade</option>
+                        <option value="高中三年级">High School 12th Grade</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label>Preferred Subjects</label>
+                    <div class="subject-select" id="subjectSelect">
+                        <span class="subject-option" data-value="数学">Math</span>
+                        <span class="subject-option" data-value="语文">Chinese</span>
+                        <span class="subject-option" data-value="英语">English</span>
+                        <span class="subject-option" data-value="物理">Physics</span>
+                        <span class="subject-option" data-value="化学">Chemistry</span>
+                        <span class="subject-option" data-value="生物">Biology</span>
+                    </div>
+                    <input type="hidden" id="subjects" name="subjects">
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-user-plus"></i>
+                    Register
+                </button>
+            </form>
+            
+            <div class="auth-footer">
+                Already have an account? <a href="/login-en">Login now</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Subject selection
+const subjectOptions = document.querySelectorAll('.subject-option');
+const subjectsInput = document.getElementById('subjects');
+let selectedSubjects = [];
+
+subjectOptions.forEach(option => {
+    option.addEventListener('click', () => {
+        const value = option.dataset.value;
+        if (option.classList.contains('active')) {
+            option.classList.remove('active');
+            selectedSubjects = selectedSubjects.filter(s => s !== value);
+        } else {
+            option.classList.add('active');
+            selectedSubjects.push(value);
+        }
+        subjectsInput.value = selectedSubjects.join(',');
+    });
+});
+
+// Form submission
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    
+    try {
+        await api('/api/register', {
+            method: 'POST',
+            body: formData
+        });
+        showToast('Registration successful!');
+        setTimeout(() => window.location.href = '/en', 500);
+    } catch (error) {
+        // Error already handled in api function
+    }
+});
+</script>
+{% endblock %}

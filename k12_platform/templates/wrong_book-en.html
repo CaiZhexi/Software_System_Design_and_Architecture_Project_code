@@ -1,17 +1,17 @@
-{% extends "layout.html" %}
+{% extends "layout-en.html" %}
 
-{% block title %}错题本 - 智慧教育平台{% endblock %}
+{% block title %}Wrong Book - Smart Education Platform{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1 class="page-title">📕 错题本</h1>
-    <p class="page-subtitle">回顾错题，巩固知识点</p>
+    <h1 class="page-title">📕 Wrong Book</h1>
+    <p class="page-subtitle">Review mistakes and consolidate knowledge</p>
 </div>
 
-<!-- 搜索和筛选栏 -->
+<!-- Search and filter bar -->
 <div class="card" style="margin-bottom: var(--spacing-xl);">
     <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap;">
-        <!-- 搜索框 -->
+        <!-- Search box -->
         <div style="flex: 1; min-width: 250px;">
             <div class="input-group">
                 <div style="position: relative;">
@@ -20,7 +20,7 @@
                         type="text" 
                         class="input" 
                         id="searchInput" 
-                        placeholder="搜索题目内容或知识点..." 
+                        placeholder="Search content or knowledge points..." 
                         style="padding-left: 40px;"
                         oninput="filterWrongBook()"
                     >
@@ -28,45 +28,45 @@
             </div>
         </div>
         
-        <!-- 学科筛选 -->
+        <!-- Subject filter -->
         <div style="min-width: 150px;">
             <select class="input" id="subjectFilter" onchange="filterWrongBook()" style="cursor: pointer;">
-                <option value="">全部学科</option>
-                <option value="数学">数学</option>
-                <option value="语文">语文</option>
-                <option value="英语">英语</option>
-                <option value="物理">物理</option>
-                <option value="化学">化学</option>
-                <option value="生物">生物</option>
-                <option value="历史">历史</option>
-                <option value="地理">地理</option>
-                <option value="政治">政治</option>
+                <option value="">All Subjects</option>
+                <option value="数学">Math</option>
+                <option value="语文">Chinese</option>
+                <option value="英语">English</option>
+                <option value="物理">Physics</option>
+                <option value="化学">Chemistry</option>
+                <option value="生物">Biology</option>
+                <option value="历史">History</option>
+                <option value="地理">Geography</option>
+                <option value="政治">Politics</option>
             </select>
         </div>
         
-        <!-- 清除筛选 -->
+        <!-- Clear filter -->
         <button class="btn btn-ghost" onclick="clearFilter()" style="white-space: nowrap;">
             <i class="fas fa-times"></i>
-            清除筛选
+            Clear Filter
         </button>
     </div>
     
-    <!-- 统计信息 -->
+    <!-- Statistics info -->
     <div id="filterStats" style="margin-top: var(--spacing-md); color: var(--text-secondary); font-size: 14px;"></div>
 </div>
 
 <div id="wrongBookContent">
     <div class="loading">
         <div class="loading-spinner"></div>
-        <span class="loading-text">加载中...</span>
+        <span class="loading-text">Loading...</span>
     </div>
 </div>
 
-<!-- 已掌握题目区域 -->
+<!-- Mastered questions section -->
 <div class="card" id="masteredSection" style="margin-top: var(--spacing-xl); display: none;">
     <div class="card-header" style="cursor: pointer;" onclick="toggleMastered()">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3 class="card-title">✅ 已掌握题目 (<span id="masteredCount">0</span>)</h3>
+            <h3 class="card-title">✅ Mastered Questions (<span id="masteredCount">0</span>)</h3>
             <i class="fas fa-chevron-down" id="masteredToggleIcon"></i>
         </div>
     </div>
@@ -78,7 +78,7 @@
 
 {% block scripts %}
 <script>
-// 全局变量存储所有错题数据
+// Global variable to store all wrong questions
 let allWrongQuestions = [];
 
 async function loadWrongBook() {
@@ -91,7 +91,7 @@ async function loadWrongBook() {
     }
 }
 
-// 渲染错题列表
+// Render wrong questions list
 function renderWrongBook(wrongs) {
     const container = document.getElementById('wrongBookContent');
     
@@ -100,8 +100,8 @@ function renderWrongBook(wrongs) {
             <div class="card">
                 <div class="empty-state">
                     <div class="empty-icon">🎉</div>
-                    <p class="empty-title">没有找到错题</p>
-                    <p class="empty-text">试试调整搜索条件</p>
+                    <p class="empty-title">No questions found</p>
+                    <p class="empty-text">Try adjusting the search criteria</p>
                 </div>
             </div>
         `;
@@ -113,13 +113,13 @@ function renderWrongBook(wrongs) {
             ${wrongs.map(w => `
                 <div class="card wrong-card" id="wrong-${w.id}" data-subject="${w.subject || ''}" data-content="${(w.content || '').toLowerCase()}" data-knowledge="${(w.knowledge_point || '').toLowerCase()}">
                     <div class="wrong-card-header">
-                        <span class="tag">${w.subject || '未分类'}</span>
+                        <span class="tag">${w.subject || 'Uncategorized'}</span>
                         <span class="wrong-subject">${new Date(w.created_at).toLocaleDateString()}</span>
                     </div>
                     
                     <div class="wrong-content">
                         ${w.image_url ? `<img src="${w.image_url}" style="max-width: 100%; border-radius: var(--radius-sm); margin-bottom: var(--spacing-md);">` : ''}
-                        ${w.content || '图片题目'}
+                        ${w.content || 'Image question'}
                     </div>
                     
                     ${w.knowledge_point ? `
@@ -129,13 +129,13 @@ function renderWrongBook(wrongs) {
                     ` : ''}
                     
                     <div class="wrong-answer">
-                        <div class="wrong-answer-label">正确答案</div>
+                        <div class="wrong-answer-label">Correct Answer</div>
                         <div>${w.answer}</div>
                     </div>
                     
                     ${w.steps && w.steps.length > 0 ? `
                         <details style="margin-bottom: var(--spacing-md);">
-                            <summary style="cursor: pointer; color: var(--primary); font-weight: 500;">查看解题步骤</summary>
+                            <summary style="cursor: pointer; color: var(--primary); font-weight: 500;">View Solution Steps</summary>
                             <ul class="steps-list" style="margin-top: var(--spacing-md);">
                                 ${w.steps.map((step, i) => `
                                     <li class="step-item">
@@ -149,18 +149,18 @@ function renderWrongBook(wrongs) {
                     
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--spacing-md);">
                         <span style="color: var(--text-secondary); font-size: 13px;">
-                            已练习 <strong>${w.practice_count}</strong> 次
+                            Practiced <strong>${w.practice_count}</strong> times
                         </span>
                     </div>
                     
                     <div class="wrong-actions">
                         <button class="btn btn-secondary btn-sm" onclick="practice(${w.id})">
                             <i class="fas fa-redo"></i>
-                            再练一次
+                            Practice Again
                         </button>
                         <button class="btn btn-sm" style="background: var(--success); color: white;" onclick="master(${w.id})">
                             <i class="fas fa-check"></i>
-                            已掌握
+                            Mastered
                         </button>
                     </div>
                 </div>
@@ -169,19 +169,19 @@ function renderWrongBook(wrongs) {
     `;
 }
 
-// 搜索和筛选功能
+// Search and filter function
 function filterWrongBook() {
     const searchText = document.getElementById('searchInput').value.toLowerCase().trim();
     const subjectFilter = document.getElementById('subjectFilter').value;
     
     let filtered = allWrongQuestions;
     
-    // 按学科筛选
+    // Filter by subject
     if (subjectFilter) {
         filtered = filtered.filter(w => w.subject === subjectFilter);
     }
     
-    // 按关键词搜索（搜索题目内容和知识点）
+    // Search by keyword (search question content and knowledge points)
     if (searchText) {
         filtered = filtered.filter(w => {
             const content = (w.content || '').toLowerCase();
@@ -197,49 +197,49 @@ function filterWrongBook() {
     updateFilterStats(filtered.length, allWrongQuestions.length);
 }
 
-// 更新统计信息
+// Update statistics info
 function updateFilterStats(filtered, total) {
     const statsEl = document.getElementById('filterStats');
     if (filtered === total) {
-        statsEl.innerHTML = `共 <strong>${total}</strong> 道错题`;
+        statsEl.innerHTML = `Total <strong>${total}</strong> questions`;
     } else {
-        statsEl.innerHTML = `显示 <strong>${filtered}</strong> 道错题，共 <strong>${total}</strong> 道`;
+        statsEl.innerHTML = `Showing <strong>${filtered}</strong> questions, total <strong>${total}</strong>`;
     }
 }
 
-// 清除筛选
+// Clear filter
 function clearFilter() {
     document.getElementById('searchInput').value = '';
     document.getElementById('subjectFilter').value = '';
     filterWrongBook();
 }
 
-// 再练一次 - 跳转到练习页面
+// Practice again - redirect to practice page
 function practice(wrongId) {
-    window.location.href = `/practice?id=${wrongId}`;
+    window.location.href = `/practice-en?id=${wrongId}`;
 }
 
-// 标记为已掌握
+// Mark as mastered
 async function master(wrongId) {
     try {
         await api(`/api/wrong-book/master/${wrongId}`, { method: 'POST' });
-        showToast('太棒了！已标记为掌握！', 'success');
+        showToast('Great! Marked as mastered!', 'success');
         
-        // 从待掌握列表中移除
+        // Remove from pending list
         const wrongCard = document.getElementById(`wrong-${wrongId}`);
         if (wrongCard) {
             wrongCard.remove();
         }
         
-        // 重新加载数据以更新已掌握区域
+        // Reload data to update mastered section
         loadWrongBook();
         loadMasteredQuestions();
     } catch (error) {
-        // 错误已处理
+        // Error already handled
     }
 }
 
-// 加载已掌握的题目
+// Load mastered questions
 async function loadMasteredQuestions() {
     try {
         const mastered = await api('/api/wrong-book/mastered');
@@ -257,13 +257,13 @@ async function loadMasteredQuestions() {
                     ${mastered.map(w => `
                         <div class="card wrong-card" style="opacity: 0.9;">
                             <div class="wrong-card-header">
-                                <span class="tag" style="background: var(--success);">${w.subject || '未分类'}</span>
+                                <span class="tag" style="background: var(--success);">${w.subject || 'Uncategorized'}</span>
                                 <span class="wrong-subject">${new Date(w.created_at).toLocaleDateString()}</span>
                             </div>
                             
                             <div class="wrong-content">
                                 ${w.image_url ? `<img src="${w.image_url}" style="max-width: 100%; border-radius: var(--radius-sm); margin-bottom: var(--spacing-md);">` : ''}
-                                ${w.content || '图片题目'}
+                                ${w.content || 'Image question'}
                             </div>
                             
                             ${w.knowledge_point ? `
@@ -273,21 +273,21 @@ async function loadMasteredQuestions() {
                             ` : ''}
                             
                             <div class="wrong-answer">
-                                <div class="wrong-answer-label">正确答案</div>
+                                <div class="wrong-answer-label">Correct Answer</div>
                                 <div>${w.answer}</div>
                             </div>
                             
                             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--spacing-md);">
                                 <span style="color: var(--text-secondary); font-size: 13px;">
-                                    已练习 <strong>${w.practice_count}</strong> 次
+                                    Practiced <strong>${w.practice_count}</strong> times
                                 </span>
-                                <span class="tag" style="background: var(--success); color: white; font-size: 12px;">✅ 已掌握</span>
+                                <span class="tag" style="background: var(--success); color: white; font-size: 12px;">✅ Mastered</span>
                             </div>
                             
                             <div class="wrong-actions">
                                 <button class="btn btn-ghost btn-sm" onclick="practice(${w.id})">
                                     <i class="fas fa-eye"></i>
-                                    查看详情
+                                    View Details
                                 </button>
                             </div>
                         </div>
@@ -302,7 +302,7 @@ async function loadMasteredQuestions() {
     }
 }
 
-// 切换已掌握区域显示
+// Toggle mastered section display
 function toggleMastered() {
     const content = document.getElementById('masteredContent');
     const icon = document.getElementById('masteredToggleIcon');
@@ -318,7 +318,7 @@ function toggleMastered() {
     }
 }
 
-// 页面加载时执行
+// Execute on page load
 loadWrongBook();
 loadMasteredQuestions();
 </script>

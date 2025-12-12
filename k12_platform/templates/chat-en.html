@@ -1,0 +1,198 @@
+{% extends "layout-en.html" %}
+
+{% block title %}Learning Assistant - Smart Education Platform{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">💬 Learning Assistant</h1>
+    <p class="page-subtitle">Ask me anything, I'm your personal study partner</p>
+</div>
+
+<div class="chat-container">
+    <!-- Session list -->
+    <div class="chat-sessions">
+        <button class="btn btn-primary" style="width: 100%; margin-bottom: var(--spacing-md);" onclick="newSession()">
+            <i class="fas fa-plus"></i>
+            New Chat
+        </button>
+        <div id="sessionList">
+            <!-- Session list will be rendered here -->
+        </div>
+    </div>
+    
+    <!-- Main chat area -->
+    <div class="chat-main">
+        <div class="chat-messages" id="chatMessages">
+            <!-- Welcome message -->
+            <div class="chat-message assistant">
+                <div class="message-avatar">🤖</div>
+                <div class="message-content">
+                    Hello! I'm your learning assistant 🎓<br><br>
+                    I can help you:<br>
+                    • Answer your study questions<br>
+                    • Create study plans<br>
+                    • Provide learning method suggestions<br>
+                    • Chat about life's challenges<br><br>
+                    Feel free to ask me anything!
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-input-area">
+            <input type="text" class="input" id="messageInput" placeholder="Type your question..." onkeypress="if(event.key==='Enter')sendMessage()">
+            <button class="btn btn-primary" onclick="sendMessage()">
+                <i class="fas fa-paper-plane"></i>
+                Send
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentSessionId = null;
+
+// Load sessions
+async function loadSessions() {
+    try {
+        const sessions = await api('/api/chat/sessions');
+        const container = document.getElementById('sessionList');
+        
+        if (sessions.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: var(--spacing-md);">No chat history</p>';
+            return;
+        }
+        
+        container.innerHTML = sessions.map(s => `
+            <div class="chat-session-item ${s.id === currentSessionId ? 'active' : ''}" onclick="loadSession(${s.id})">
+                <div class="chat-session-title">${s.title}</div>
+                <div class="chat-session-time">${new Date(s.created_at).toLocaleDateString()}</div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// Load session messages
+async function loadSession(sessionId) {
+    currentSessionId = sessionId;
+    loadSessions(); // Update active state
+    
+    try {
+        const messages = await api(`/api/chat/messages/${sessionId}`);
+        const container = document.getElementById('chatMessages');
+        
+        container.innerHTML = messages.map(m => `
+            <div class="chat-message ${m.role}">
+                <div class="message-avatar">${m.role === 'user' ? '👤' : '🤖'}</div>
+                <div class="message-content">${formatMessage(m.content)}</div>
+            </div>
+        `).join('');
+        
+        container.scrollTop = container.scrollHeight;
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// New session
+function newSession() {
+    currentSessionId = null;
+    document.getElementById('chatMessages').innerHTML = `
+        <div class="chat-message assistant">
+            <div class="message-avatar">🤖</div>
+            <div class="message-content">
+                Hello! I'm your learning assistant 🎓<br><br>
+                I can help you:<br>
+                • Answer your study questions<br>
+                • Create study plans<br>
+                • Provide learning method suggestions<br>
+                • Chat about life's challenges<br><br>
+                Feel free to ask me anything!
+            </div>
+        </div>
+    `;
+    loadSessions();
+}
+
+// Send message
+async function sendMessage() {
+    const input = document.getElementById('messageInput');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    const container = document.getElementById('chatMessages');
+    
+    // Display user message
+    container.innerHTML += `
+        <div class="chat-message user">
+            <div class="message-avatar">👤</div>
+            <div class="message-content">${escapeHtml(message)}</div>
+        </div>
+    `;
+    
+    input.value = '';
+    container.scrollTop = container.scrollHeight;
+    
+    // Display loading state
+    const loadingId = 'loading-' + Date.now();
+    container.innerHTML += `
+        <div class="chat-message assistant" id="${loadingId}">
+            <div class="message-avatar">🤖</div>
+            <div class="message-content">
+                <div class="loading" style="padding: 0;">
+                    <div class="loading-spinner" style="width: 20px; height: 20px;"></div>
+                    <span class="loading-text" style="font-size: 14px;">Thinking...</span>
+                </div>
+            </div>
+        </div>
+    `;
+    container.scrollTop = container.scrollHeight;
+    
+    try {
+        const result = await api('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: message,
+                session_id: currentSessionId
+            })
+        });
+        
+        currentSessionId = result.session_id;
+        
+        // Replace loading state
+        document.getElementById(loadingId).outerHTML = `
+            <div class="chat-message assistant">
+                <div class="message-avatar">🤖</div>
+                <div class="message-content">${formatMessage(result.response)}</div>
+            </div>
+        `;
+        
+        container.scrollTop = container.scrollHeight;
+        loadSessions();
+        
+    } catch (error) {
+        document.getElementById(loadingId).remove();
+    }
+}
+
+// Format message (Markdown rendering)
+function formatMessage(text) {
+    return renderMarkdown(text);
+}
+
+// HTML escape (for user input)
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Initialize
+loadSessions();
+</script>
+{% endblock %}

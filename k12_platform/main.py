@@ -70,6 +70,12 @@ async def wrong_book_page(request: Request, user=Depends(require_auth)):
     return templates.TemplateResponse("wrong_book.html", {"request": request, "user": user})
 
 
+@app.get("/practice", response_class=HTMLResponse)
+async def practice_page(request: Request, user=Depends(require_auth)):
+    """错题练习页面"""
+    return templates.TemplateResponse("practice.html", {"request": request, "user": user})
+
+
 @app.get("/statistics", response_class=HTMLResponse)
 async def statistics_page(request: Request, user=Depends(require_auth)):
     """学习统计页面"""
@@ -80,6 +86,70 @@ async def statistics_page(request: Request, user=Depends(require_auth)):
 async def profile_page(request: Request, user=Depends(require_auth)):
     """个人信息页面"""
     return templates.TemplateResponse("profile.html", {"request": request, "user": user})
+
+
+# ==================== 英文版页面路由 ====================
+
+@app.get("/en", response_class=HTMLResponse)
+async def home_en(request: Request, user=Depends(get_current_user)):
+    """首页 - 英文"""
+    if not user:
+        return RedirectResponse(url="/login-en", status_code=302)
+    return templates.TemplateResponse("index-en.html", {"request": request, "user": user})
+
+
+@app.get("/login-en", response_class=HTMLResponse)
+async def login_page_en(request: Request):
+    """登录页面 - 英文"""
+    return templates.TemplateResponse("login-en.html", {"request": request})
+
+
+@app.get("/register-en", response_class=HTMLResponse)
+async def register_page_en(request: Request):
+    """注册页面 - 英文"""
+    return templates.TemplateResponse("register-en.html", {"request": request})
+
+
+@app.get("/question-en", response_class=HTMLResponse)
+async def question_page_en(request: Request, user=Depends(require_auth)):
+    """提问页面 - 英文"""
+    return templates.TemplateResponse("question-en.html", {"request": request, "user": user})
+
+
+@app.get("/essay-en", response_class=HTMLResponse)
+async def essay_page_en(request: Request, user=Depends(require_auth)):
+    """作文批改页面 - 英文"""
+    return templates.TemplateResponse("essay-en.html", {"request": request, "user": user})
+
+
+@app.get("/chat-en", response_class=HTMLResponse)
+async def chat_page_en(request: Request, user=Depends(require_auth)):
+    """聊天助手页面 - 英文"""
+    return templates.TemplateResponse("chat-en.html", {"request": request, "user": user})
+
+
+@app.get("/wrong-book-en", response_class=HTMLResponse)
+async def wrong_book_page_en(request: Request, user=Depends(require_auth)):
+    """错题本页面 - 英文"""
+    return templates.TemplateResponse("wrong_book-en.html", {"request": request, "user": user})
+
+
+@app.get("/practice-en", response_class=HTMLResponse)
+async def practice_page_en(request: Request, user=Depends(require_auth)):
+    """错题练习页面 - 英文"""
+    return templates.TemplateResponse("practice-en.html", {"request": request, "user": user})
+
+
+@app.get("/statistics-en", response_class=HTMLResponse)
+async def statistics_page_en(request: Request, user=Depends(require_auth)):
+    """学习统计页面 - 英文"""
+    return templates.TemplateResponse("statistics-en.html", {"request": request, "user": user})
+
+
+@app.get("/profile-en", response_class=HTMLResponse)
+async def profile_page_en(request: Request, user=Depends(require_auth)):
+    """个人信息页面 - 英文"""
+    return templates.TemplateResponse("profile-en.html", {"request": request, "user": user})
 
 
 # ==================== API路由 ====================
@@ -235,7 +305,8 @@ async def submit_essay(
         structure_feedback=json.dumps(result.get("structure", {}), ensure_ascii=False),
         grammar_feedback=json.dumps(result.get("grammar", {}), ensure_ascii=False),
         vocabulary_feedback=json.dumps(result.get("vocabulary", {}), ensure_ascii=False),
-        suggestions=json.dumps(result.get("suggestions", []), ensure_ascii=False)
+        suggestions=json.dumps(result.get("suggestions", []), ensure_ascii=False),
+        topic_analysis=json.dumps(result.get("topic_analysis", {}), ensure_ascii=False)
     )
     db.add(essay)
     db.commit()
@@ -335,12 +406,17 @@ async def add_to_wrong_book(
 
 
 @app.get("/api/wrong-book")
-async def get_wrong_book(user=Depends(require_auth), db: Session = Depends(get_db)):
+async def get_wrong_book(user=Depends(require_auth), db: Session = Depends(get_db), include_mastered: bool = False):
     """获取错题本"""
-    wrongs = db.query(WrongQuestion).filter(
-        WrongQuestion.user_id == int(user["sub"]),
-        WrongQuestion.is_mastered == False
-    ).order_by(WrongQuestion.created_at.desc()).all()
+    if include_mastered:
+        wrongs = db.query(WrongQuestion).filter(
+            WrongQuestion.user_id == int(user["sub"])
+        ).order_by(WrongQuestion.created_at.desc()).all()
+    else:
+        wrongs = db.query(WrongQuestion).filter(
+            WrongQuestion.user_id == int(user["sub"]),
+            WrongQuestion.is_mastered == False
+        ).order_by(WrongQuestion.created_at.desc()).all()
     
     result = []
     for w in wrongs:
@@ -391,6 +467,35 @@ async def master_wrong(wrong_id: int, user=Depends(require_auth), db: Session = 
         db.commit()
     
     return {"message": "已标记为掌握"}
+
+
+@app.get("/api/wrong-book/mastered")
+async def get_mastered_questions(user=Depends(require_auth), db: Session = Depends(get_db)):
+    """获取已掌握的题目"""
+    wrongs = db.query(WrongQuestion).filter(
+        WrongQuestion.user_id == int(user["sub"]),
+        WrongQuestion.is_mastered == True
+    ).order_by(WrongQuestion.created_at.desc()).all()
+    
+    result = []
+    for w in wrongs:
+        q = db.query(Question).filter(Question.id == w.question_id).first()
+        a = db.query(Answer).filter(Answer.question_id == w.question_id).first()
+        if q:
+            result.append({
+                "id": w.id,
+                "question_id": q.id,
+                "content": q.content,
+                "image_url": q.image_url,
+                "subject": q.subject,
+                "knowledge_point": q.knowledge_point,
+                "answer": a.content if a else "",
+                "steps": json.loads(a.steps) if a and a.steps else [],
+                "practice_count": w.practice_count,
+                "created_at": w.created_at.isoformat()
+            })
+    
+    return result
 
 
 @app.get("/api/statistics")

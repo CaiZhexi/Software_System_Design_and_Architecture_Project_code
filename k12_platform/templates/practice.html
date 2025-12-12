@@ -1,0 +1,264 @@
+{% extends "layout.html" %}
+
+{% block title %}错题练习 - 智慧教育平台{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">📝 错题练习</h1>
+    <p class="page-subtitle">专注练习，巩固知识</p>
+</div>
+
+<!-- 练习区域 -->
+<div class="practice-container" style="max-width: 900px; margin: 0 auto;">
+    <!-- 题目卡片 -->
+    <div class="card" id="questionCard">
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            <span class="loading-text">加载中...</span>
+        </div>
+    </div>
+    
+    <!-- 答题区域 -->
+    <div class="card" id="answerCard" style="display: none; margin-top: var(--spacing-xl);">
+        <h3 style="margin-bottom: var(--spacing-lg);">💭 你的答案</h3>
+        <textarea 
+            class="input" 
+            id="userAnswer" 
+            placeholder="请输入你的答案..." 
+            style="min-height: 150px; font-size: 16px;"
+        ></textarea>
+        <div style="display: flex; gap: var(--spacing-md); margin-top: var(--spacing-lg);">
+            <button class="btn btn-primary" onclick="submitAnswer()" style="flex: 1;">
+                <i class="fas fa-check"></i>
+                提交答案
+            </button>
+            <button class="btn btn-secondary" onclick="showHint()" style="flex: 1;">
+                <i class="fas fa-lightbulb"></i>
+                获取思路提示
+            </button>
+        </div>
+    </div>
+    
+    <!-- 思路提示 -->
+    <div class="card" id="hintCard" style="display: none; margin-top: var(--spacing-xl); background: linear-gradient(135deg, rgba(255,193,7,0.1) 0%, rgba(255,193,7,0.05) 100%); border-left: 4px solid var(--warning);">
+        <h3 style="margin-bottom: var(--spacing-md);">💡 解题思路提示</h3>
+        <div id="hintContent" style="color: var(--text-secondary); line-height: 1.8;"></div>
+    </div>
+    
+    <!-- 知识点讲解 -->
+    <div class="card" id="knowledgeCard" style="margin-top: var(--spacing-xl); background: linear-gradient(135deg, rgba(123,104,238,0.1) 0%, rgba(123,104,238,0.05) 100%); border-left: 4px solid var(--purple);">
+        <h3 style="margin-bottom: var(--spacing-md);">📚 重点知识讲解</h3>
+        <div id="knowledgeContent"></div>
+    </div>
+    
+    <!-- 答案对比 -->
+    <div class="card" id="resultCard" style="display: none; margin-top: var(--spacing-xl);">
+        <h3 style="margin-bottom: var(--spacing-lg);">📊 答案对比</h3>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-lg); margin-bottom: var(--spacing-xl);">
+            <div>
+                <h4 style="color: var(--text-secondary); margin-bottom: var(--spacing-sm);">你的答案</h4>
+                <div id="userAnswerDisplay" style="padding: var(--spacing-md); background: var(--bg-primary); border-radius: var(--radius-md); min-height: 100px;"></div>
+            </div>
+            <div>
+                <h4 style="color: var(--success); margin-bottom: var(--spacing-sm);">正确答案</h4>
+                <div id="correctAnswerDisplay" style="padding: var(--spacing-md); background: var(--bg-primary); border-radius: var(--radius-md); min-height: 100px;"></div>
+            </div>
+        </div>
+        
+        <!-- AI评价 -->
+        <div id="aiEvaluation" style="padding: var(--spacing-lg); background: var(--bg-primary); border-radius: var(--radius-md); border-left: 4px solid var(--info);">
+            <h4 style="margin-bottom: var(--spacing-md);">🤖 AI评价</h4>
+            <div id="evaluationContent" style="color: var(--text-secondary); line-height: 1.8;"></div>
+        </div>
+        
+        <div style="display: flex; gap: var(--spacing-md); margin-top: var(--spacing-xl);">
+            <button class="btn btn-secondary" onclick="retryQuestion()" style="flex: 1;">
+                <i class="fas fa-redo"></i>
+                重新练习
+            </button>
+            <button class="btn btn-primary" onclick="backToWrongBook()" style="flex: 1;">
+                <i class="fas fa-arrow-left"></i>
+                返回错题本
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentQuestion = null;
+let wrongId = null;
+
+// 获取URL参数
+function getQueryParam(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+}
+
+// 加载题目
+async function loadQuestion() {
+    wrongId = getQueryParam('id');
+    if (!wrongId) {
+        showToast('未找到题目ID', 'error');
+        setTimeout(() => window.location.href = '/wrong-book', 1500);
+        return;
+    }
+    
+    try {
+        const wrongs = await api('/api/wrong-book');
+        currentQuestion = wrongs.find(w => w.id == wrongId);
+        
+        if (!currentQuestion) {
+            showToast('题目不存在', 'error');
+            setTimeout(() => window.location.href = '/wrong-book', 1500);
+            return;
+        }
+        
+        renderQuestion();
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// 渲染题目
+function renderQuestion() {
+    const questionCard = document.getElementById('questionCard');
+    const answerCard = document.getElementById('answerCard');
+    
+    questionCard.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg); padding-bottom: var(--spacing-md); border-bottom: 2px solid var(--border);">
+            <span class="tag tag-primary" style="font-size: 14px;">${currentQuestion.subject || '未分类'}</span>
+            <span style="color: var(--text-secondary); font-size: 14px;">练习次数：${currentQuestion.practice_count || 0}</span>
+        </div>
+        
+        <h2 style="margin-bottom: var(--spacing-xl); font-size: 20px; line-height: 1.8;">
+            ${currentQuestion.content || '图片题目'}
+        </h2>
+        
+        ${currentQuestion.image_url ? `
+            <img src="${currentQuestion.image_url}" style="max-width: 100%; border-radius: var(--radius-md); margin-bottom: var(--spacing-xl);">
+        ` : ''}
+        
+        ${currentQuestion.knowledge_point ? `
+            <div style="padding: var(--spacing-md); background: var(--bg-primary); border-radius: var(--radius-md); margin-top: var(--spacing-lg);">
+                <span style="color: var(--text-secondary); font-size: 14px;">💡 涉及知识点：</span>
+                <strong>${currentQuestion.knowledge_point}</strong>
+            </div>
+        ` : ''}
+    `;
+    
+    answerCard.style.display = 'block';
+    renderKnowledge();
+}
+
+// 渲染知识点讲解
+function renderKnowledge() {
+    const knowledgeContent = document.getElementById('knowledgeContent');
+    if (currentQuestion.steps && currentQuestion.steps.length > 0) {
+        knowledgeContent.innerHTML = `
+            <ul class="steps-list">
+                ${currentQuestion.steps.map((step, i) => `
+                    <li class="step-item">
+                        <span class="step-number">${i + 1}</span>
+                        <div class="step-content">${step}</div>
+                    </li>
+                `).join('')}
+            </ul>
+        `;
+    } else {
+        knowledgeContent.innerHTML = '<p style="color: var(--text-secondary);">暂无详细步骤</p>';
+    }
+}
+
+// 显示思路提示
+function showHint() {
+    const hintCard = document.getElementById('hintCard');
+    const hintContent = document.getElementById('hintContent');
+    
+    if (hintCard.style.display === 'block') {
+        hintCard.style.display = 'none';
+        return;
+    }
+    
+    // 从解题步骤中提取第一步作为提示
+    if (currentQuestion.steps && currentQuestion.steps.length > 0) {
+        hintContent.innerHTML = `
+            <p><strong>第一步提示：</strong></p>
+            <p>${currentQuestion.steps[0]}</p>
+            <p style="margin-top: var(--spacing-md); font-style: italic;">💡 先尝试根据这个提示思考，实在不会可以查看下方的完整知识点讲解</p>
+        `;
+    } else {
+        hintContent.innerHTML = '<p>暂无思路提示，请查看下方知识点讲解</p>';
+    }
+    
+    hintCard.style.display = 'block';
+}
+
+// 提交答案
+async function submitAnswer() {
+    const userAnswer = document.getElementById('userAnswer').value.trim();
+    
+    if (!userAnswer) {
+        showToast('请输入答案', 'warning');
+        return;
+    }
+    
+    // 显示结果卡片
+    const resultCard = document.getElementById('resultCard');
+    const userAnswerDisplay = document.getElementById('userAnswerDisplay');
+    const correctAnswerDisplay = document.getElementById('correctAnswerDisplay');
+    const evaluationContent = document.getElementById('evaluationContent');
+    
+    userAnswerDisplay.textContent = userAnswer;
+    correctAnswerDisplay.textContent = currentQuestion.answer;
+    
+    // 简单对比判断
+    const isCorrect = userAnswer.toLowerCase().includes(currentQuestion.answer.toLowerCase()) ||
+                      currentQuestion.answer.toLowerCase().includes(userAnswer.toLowerCase());
+    
+    if (isCorrect) {
+        evaluationContent.innerHTML = `
+            <div style="color: var(--success); font-weight: 600; margin-bottom: var(--spacing-sm);">
+                ✅ 回答正确！
+            </div>
+            <p>你的答案与标准答案一致，说明你已经掌握了这个知识点。继续保持！</p>
+        `;
+    } else {
+        evaluationContent.innerHTML = `
+            <div style="color: var(--warning); font-weight: 600; margin-bottom: var(--spacing-sm);">
+                ⚠️ 答案有差异
+            </div>
+            <p>你的答案与标准答案不完全一致，建议仔细查看上方的知识点讲解，理解解题思路。</p>
+        `;
+    }
+    
+    resultCard.style.display = 'block';
+    resultCard.scrollIntoView({ behavior: 'smooth' });
+    
+    // 记录练习次数
+    try {
+        await api(`/api/wrong-book/practice/${wrongId}`, { method: 'POST' });
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// 重新练习
+function retryQuestion() {
+    document.getElementById('userAnswer').value = '';
+    document.getElementById('resultCard').style.display = 'none';
+    document.getElementById('hintCard').style.display = 'none';
+    document.getElementById('answerCard').scrollIntoView({ behavior: 'smooth' });
+}
+
+// 返回错题本
+function backToWrongBook() {
+    window.location.href = '/wrong-book';
+}
+
+// 页面加载时执行
+loadQuestion();
+</script>
+{% endblock %}

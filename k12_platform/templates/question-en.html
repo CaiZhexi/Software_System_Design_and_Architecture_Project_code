@@ -1,0 +1,270 @@
+{% extends "layout-en.html" %}
+
+{% block title %}Photo Solver - Smart Education Platform{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">📸 Photo Solver</h1>
+    <p class="page-subtitle">Upload a photo or type your question, AI will provide detailed solutions</p>
+</div>
+
+<div class="question-container">
+    <!-- Input area -->
+    <div class="question-input-card">
+        <div class="card">
+            <h3 class="card-title" style="margin-bottom: var(--spacing-lg);">Enter Question</h3>
+            
+            <form id="questionForm">
+                <!-- Subject selection -->
+                <div class="input-group">
+                    <label>Select Subject</label>
+                    <div class="subject-select" id="subjectSelect">
+                        <span class="subject-option active" data-value="数学">🔢 Math</span>
+                        <span class="subject-option" data-value="物理">⚛️ Physics</span>
+                        <span class="subject-option" data-value="化学">🧪 Chemistry</span>
+                        <span class="subject-option" data-value="生物">🧬 Biology</span>
+                        <span class="subject-option" data-value="语文">📖 Chinese</span>
+                        <span class="subject-option" data-value="英语">🔤 English</span>
+                    </div>
+                    <input type="hidden" name="subject" id="subjectInput" value="数学">
+                </div>
+                
+                <!-- Image upload -->
+                <div class="input-group">
+                    <label>Upload Question Image (Optional)</label>
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📷</div>
+                        <div class="upload-text">
+                            Click to upload or drag image here<br>
+                            <strong>Supports JPG, PNG formats</strong>
+                        </div>
+                        <input type="file" id="imageInput" name="image" accept="image/*" style="display: none;">
+                        <img id="previewImage" class="preview-image" style="display: none;">
+                    </div>
+                </div>
+                
+                <!-- Text input -->
+                <div class="input-group">
+                    <label>Question Content (Can be used with image)</label>
+                    <textarea class="input" name="content" id="contentInput" placeholder="Enter question content, e.g.: Given f(x)=x²+2x+1, find f(3)..."></textarea>
+                </div>
+                
+                <button type="button" class="btn btn-primary btn-lg" style="width: 100%;" id="submitBtn" onclick="submitQuestion()">
+                    <i class="fas fa-magic"></i>
+                    Solve Question
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Answer area -->
+    <div>
+        <div class="card answer-card" id="answerCard" style="display: none;">
+            <div class="card-header">
+                <h3 class="card-title">💡 Solution</h3>
+                <span class="tag tag-success" id="subjectTag">Math</span>
+            </div>
+            
+            <!-- Final answer -->
+            <div class="answer-section">
+                <h3><i class="fas fa-check-circle icon"></i> Final Answer</h3>
+                <div class="final-answer" id="finalAnswer"></div>
+            </div>
+            
+            <!-- Step-by-step solution -->
+            <div class="answer-section">
+                <h3><i class="fas fa-list-ol icon"></i> Solution Steps</h3>
+                <ul class="steps-list" id="stepsList"></ul>
+            </div>
+            
+            <!-- Knowledge points -->
+            <div class="answer-section">
+                <h3><i class="fas fa-lightbulb icon"></i> Knowledge Points</h3>
+                <div class="knowledge-tags" id="knowledgeTags"></div>
+            </div>
+            
+            <!-- Tips -->
+            <div class="answer-section" id="tipsSection" style="display: none;">
+                <h3><i class="fas fa-star icon"></i> Problem-Solving Tips</h3>
+                <p id="tipsContent" style="color: var(--text-secondary); line-height: 1.8;"></p>
+            </div>
+            
+            <!-- Action buttons -->
+            <div class="answer-actions">
+                <button class="btn btn-secondary" id="addToWrongBtn">
+                    <i class="fas fa-book"></i>
+                    Add to Wrong Book
+                </button>
+                <button class="btn btn-ghost" onclick="location.reload()">
+                    <i class="fas fa-redo"></i>
+                    Ask Another
+                </button>
+            </div>
+        </div>
+        
+        <!-- Loading state -->
+        <div class="card" id="loadingCard" style="display: none;">
+            <div class="loading" style="padding: 60px;">
+                <div class="loading-spinner"></div>
+                <span class="loading-text">AI is analyzing the question...</span>
+            </div>
+        </div>
+        
+        <!-- Initial prompt -->
+        <div class="card" id="emptyCard">
+            <div class="empty-state">
+                <div class="empty-icon">🤔</div>
+                <p class="empty-title">Waiting for your question</p>
+                <p class="empty-text">Upload an image or enter question content to get started</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentQuestionId = null;
+
+// Subject selection
+const subjectOptions = document.querySelectorAll('.subject-option');
+const subjectInput = document.getElementById('subjectInput');
+
+subjectOptions.forEach(option => {
+    option.addEventListener('click', () => {
+        subjectOptions.forEach(o => o.classList.remove('active'));
+        option.classList.add('active');
+        subjectInput.value = option.dataset.value;
+    });
+});
+
+// Image upload
+const uploadArea = document.getElementById('uploadArea');
+const imageInput = document.getElementById('imageInput');
+const previewImage = document.getElementById('previewImage');
+
+uploadArea.addEventListener('click', () => imageInput.click());
+
+uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+});
+
+uploadArea.addEventListener('dragleave', () => {
+    uploadArea.classList.remove('dragover');
+});
+
+uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        imageInput.files = files;
+        showPreview(files[0]);
+    }
+});
+
+imageInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+        showPreview(e.target.files[0]);
+    }
+});
+
+function showPreview(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        previewImage.src = e.target.result;
+        previewImage.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+}
+
+// Form submission
+async function submitQuestion() {
+    const content = document.getElementById('contentInput').value;
+    const image = imageInput.files[0];
+    
+    if (!content && !image) {
+        showToast('Please enter question content or upload an image', 'warning');
+        return;
+    }
+    
+    const formData = new FormData(document.getElementById('questionForm'));
+    
+    // Display loading state
+    document.getElementById('emptyCard').style.display = 'none';
+    document.getElementById('answerCard').style.display = 'none';
+    document.getElementById('loadingCard').style.display = 'block';
+    document.getElementById('submitBtn').disabled = true;
+    
+    try {
+        const result = await api('/api/question', {
+            method: 'POST',
+            body: formData
+        });
+        
+        currentQuestionId = result.question_id;
+        
+        // Display answer
+        document.getElementById('loadingCard').style.display = 'none';
+        document.getElementById('answerCard').style.display = 'block';
+        
+        document.getElementById('subjectTag').textContent = subjectInput.value;
+        document.getElementById('finalAnswer').innerHTML = renderMarkdown(result.answer);
+        
+        // Steps (supports Markdown)
+        const stepsList = document.getElementById('stepsList');
+        if (result.steps && result.steps.length > 0) {
+            stepsList.innerHTML = result.steps.map((step, i) => `
+                <li class="step-item">
+                    <span class="step-number">${i + 1}</span>
+                    <div class="step-content">${renderMarkdown(step)}</div>
+                </li>
+            `).join('');
+        } else {
+            stepsList.innerHTML = '<li class="step-item"><div class="step-content">No detailed steps available</div></li>';
+        }
+        
+        // Knowledge points
+        const knowledgeTags = document.getElementById('knowledgeTags');
+        if (result.knowledge_points && result.knowledge_points.length > 0) {
+            knowledgeTags.innerHTML = result.knowledge_points.map(kp => 
+                `<span class="tag">${kp}</span>`
+            ).join('');
+        } else {
+            knowledgeTags.innerHTML = '<span class="tag">General</span>';
+        }
+        
+        // Tips (supports Markdown)
+        if (result.tips) {
+            document.getElementById('tipsSection').style.display = 'block';
+            document.getElementById('tipsContent').innerHTML = renderMarkdown(result.tips);
+        }
+        
+        showToast('Solution complete!');
+        
+    } catch (error) {
+        document.getElementById('loadingCard').style.display = 'none';
+        document.getElementById('emptyCard').style.display = 'block';
+    }
+    
+    document.getElementById('submitBtn').disabled = false;
+}
+
+// Add to wrong book
+document.getElementById('addToWrongBtn').addEventListener('click', async () => {
+    if (!currentQuestionId) return;
+    
+    try {
+        await api('/api/wrong-book/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question_id: currentQuestionId })
+        });
+        showToast('Added to wrong book!');
+    } catch (error) {
+        // Error already handled
+    }
+});
+</script>
+{% endblock %}

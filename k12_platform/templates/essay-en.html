@@ -1,188 +1,188 @@
-{% extends "layout.html" %}
+{% extends "layout-en.html" %}
 
-{% block title %}作文批改 - 智慧教育平台{% endblock %}
+{% block title %}Essay Review - Smart Education Platform{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1 class="page-title">✍️ 作文批改</h1>
-    <p class="page-subtitle">提交你的作文，获得专业的批改和建议</p>
+    <h1 class="page-title">✍️ Essay Review</h1>
+    <p class="page-subtitle">Submit your essay for professional feedback and suggestions</p>
 </div>
 
 <div class="essay-container">
-    <!-- 输入区域 -->
+    <!-- Input area -->
     <div>
         <div class="card">
-            <h3 class="card-title" style="margin-bottom: var(--spacing-lg);">提交作文</h3>
+            <h3 class="card-title" style="margin-bottom: var(--spacing-lg);">Submit Essay</h3>
             
             <form id="essayForm">
-                <!-- 作文类型 -->
+                <!-- Essay type -->
                 <div class="input-group">
-                    <label>作文类型</label>
+                    <label>Essay Type</label>
                     <div class="essay-type-select" id="typeSelect">
-                        <span class="subject-option active" data-value="记叙文">📖 记叙文</span>
-                        <span class="subject-option" data-value="议论文">💭 议论文</span>
-                        <span class="subject-option" data-value="说明文">📋 说明文</span>
-                        <span class="subject-option" data-value="应用文">📝 应用文</span>
+                        <span class="subject-option active" data-value="记叙文">📖 Narrative</span>
+                        <span class="subject-option" data-value="议论文">💭 Argumentative</span>
+                        <span class="subject-option" data-value="说明文">📋 Expository</span>
+                        <span class="subject-option" data-value="应用文">📝 Practical</span>
                     </div>
                     <input type="hidden" name="essay_type" id="typeInput" value="记叙文">
                 </div>
                 
-                <!-- 标题 -->
+                <!-- Title -->
                 <div class="input-group">
-                    <label for="title">作文标题</label>
-                    <input type="text" class="input" name="title" id="title" placeholder="输入作文标题" required>
+                    <label for="title">Essay Title</label>
+                    <input type="text" class="input" name="title" id="title" placeholder="Enter essay title" required>
                 </div>
                 
-                <!-- 内容 -->
+                <!-- Content -->
                 <div class="input-group">
-                    <label for="content">作文内容</label>
-                    <textarea class="input" name="content" id="content" placeholder="粘贴或输入你的作文内容..." required style="min-height: 300px;"></textarea>
+                    <label for="content">Essay Content</label>
+                    <textarea class="input" name="content" id="content" placeholder="Paste or type your essay content..." required style="min-height: 300px;"></textarea>
                     <div style="display: flex; justify-content: space-between; margin-top: var(--spacing-sm); color: var(--text-secondary); font-size: 13px;">
-                        <span>建议字数：500-1000字</span>
-                        <span>当前字数：<span id="wordCount">0</span></span>
+                        <span>Recommended: 500-1000 words</span>
+                        <span>Current count: <span id="wordCount">0</span></span>
                     </div>
                 </div>
                 
                 <button type="button" class="btn btn-primary btn-lg" style="width: 100%;" id="submitBtn" onclick="submitEssay()">
                     <i class="fas fa-paper-plane"></i>
-                    提交批改
+                    Submit for Review
                 </button>
             </form>
         </div>
     </div>
     
-    <!-- 结果区域 -->
+    <!-- Result area -->
     <div>
         <div class="card" id="resultCard" style="display: none;">
             <div class="card-header">
-                <h3 class="card-title">📊 批改结果</h3>
+                <h3 class="card-title">📊 Review Results</h3>
             </div>
             
-            <!-- 总分 -->
+            <!-- Overall score -->
             <div class="score-circle">
                 <span class="score-value" id="overallScore">0</span>
-                <span class="score-label">综合评分</span>
+                <span class="score-label">Overall Score</span>
             </div>
             
-            <!-- 审题立意解读 -->
+            <!-- Topic Analysis -->
             <div class="feedback-section" style="background: linear-gradient(135deg, rgba(255,193,7,0.1) 0%, rgba(255,193,7,0.05) 100%); border-left: 4px solid var(--warning);">
                 <div class="feedback-header">
                     <span class="feedback-title">
                         <i class="fas fa-lightbulb" style="color: var(--warning);"></i>
-                        审题立意解读
+                        Topic Analysis
                     </span>
                 </div>
                 <div id="topicAnalysisContent">
-                    <!-- 可选主题 -->
+                    <!-- Possible themes -->
                     <div style="margin-bottom: var(--spacing-md);">
                         <h5 style="color: var(--text-primary); font-weight: 600; margin-bottom: var(--spacing-sm); display: flex; align-items: center; gap: var(--spacing-xs);">
-                            <span style="color: var(--warning);">📌</span> 可选主题
+                            <span style="color: var(--warning);">📌</span> Possible Themes
                         </h5>
                         <ul id="possibleThemes" style="list-style: none; padding-left: 0;"></ul>
                     </div>
                     
-                    <!-- 出题人目的 -->
+                    <!-- Examiner's purpose -->
                     <div style="margin-bottom: var(--spacing-md);">
                         <h5 style="color: var(--text-primary); font-weight: 600; margin-bottom: var(--spacing-sm); display: flex; align-items: center; gap: var(--spacing-xs);">
-                            <span style="color: var(--info);">🎯</span> 出题人目的
+                            <span style="color: var(--info);">🎯</span> Examiner's Purpose
                         </h5>
                         <p id="examinerPurpose" style="color: var(--text-secondary); line-height: 1.8; padding: var(--spacing-md); background: var(--bg-primary); border-radius: var(--radius-sm);"></p>
                     </div>
                     
-                    <!-- 应该突出的要点 -->
+                    <!-- Key points -->
                     <div style="margin-bottom: var(--spacing-md);">
                         <h5 style="color: var(--text-primary); font-weight: 600; margin-bottom: var(--spacing-sm); display: flex; align-items: center; gap: var(--spacing-xs);">
-                            <span style="color: var(--success);">✨</span> 应该突出的要点
+                            <span style="color: var(--success);">✨</span> Key Points to Highlight
                         </h5>
                         <p id="keyPoints" style="color: var(--text-secondary); line-height: 1.8; padding: var(--spacing-md); background: var(--bg-primary); border-radius: var(--radius-sm);"></p>
                     </div>
                     
-                    <!-- 审题误解的常见方向 -->
+                    <!-- Common mistakes -->
                     <div>
                         <h5 style="color: var(--text-primary); font-weight: 600; margin-bottom: var(--spacing-sm); display: flex; align-items: center; gap: var(--spacing-xs);">
-                            <span style="color: var(--danger);">⚠️</span> 审题误解的常见方向
+                            <span style="color: var(--danger);">⚠️</span> Common Misunderstandings
                         </h5>
                         <ul id="commonMistakes" style="list-style: none; padding-left: 0;"></ul>
                     </div>
                 </div>
             </div>
             
-            <!-- 结构评价 -->
+            <!-- Structure -->
             <div class="feedback-section">
                 <div class="feedback-header">
                     <span class="feedback-title">
                         <i class="fas fa-sitemap" style="color: var(--primary);"></i>
-                        文章结构
+                        Structure
                     </span>
                     <span class="feedback-score" id="structureScore">-</span>
                 </div>
                 <p id="structureFeedback" style="color: var(--text-secondary); line-height: 1.8;"></p>
             </div>
             
-            <!-- 语法评价 -->
+            <!-- Grammar -->
             <div class="feedback-section">
                 <div class="feedback-header">
                     <span class="feedback-title">
                         <i class="fas fa-spell-check" style="color: var(--secondary);"></i>
-                        语法表达
+                        Grammar & Expression
                     </span>
                     <span class="feedback-score" id="grammarScore">-</span>
                 </div>
                 <p id="grammarFeedback" style="color: var(--text-secondary); line-height: 1.8;"></p>
             </div>
             
-            <!-- 词汇评价 -->
+            <!-- Vocabulary -->
             <div class="feedback-section">
                 <div class="feedback-header">
                     <span class="feedback-title">
                         <i class="fas fa-font" style="color: var(--purple);"></i>
-                        词汇运用
+                        Vocabulary
                     </span>
                     <span class="feedback-score" id="vocabularyScore">-</span>
                 </div>
                 <p id="vocabularyFeedback" style="color: var(--text-secondary); line-height: 1.8;"></p>
             </div>
             
-            <!-- 总体评价 -->
+            <!-- Overall feedback -->
             <div class="feedback-section" style="background: linear-gradient(135deg, rgba(255,107,53,0.1) 0%, rgba(78,205,196,0.1) 100%);">
                 <div class="feedback-header">
                     <span class="feedback-title">
                         <i class="fas fa-star" style="color: var(--accent);"></i>
-                        总体评价
+                        Overall Feedback
                     </span>
                 </div>
                 <p id="overallFeedback" style="color: var(--text-primary); line-height: 1.8; font-weight: 500;"></p>
             </div>
             
-            <!-- 修改建议 -->
+            <!-- Suggestions -->
             <div style="margin-top: var(--spacing-lg);">
                 <h4 style="margin-bottom: var(--spacing-md); display: flex; align-items: center; gap: var(--spacing-sm);">
                     <i class="fas fa-lightbulb" style="color: var(--warning);"></i>
-                    修改建议
+                    Improvement Suggestions
                 </h4>
                 <ul id="suggestionsList" style="list-style: none;"></ul>
             </div>
             
             <button class="btn btn-secondary" style="width: 100%; margin-top: var(--spacing-xl);" onclick="location.reload()">
                 <i class="fas fa-redo"></i>
-                再次批改
+                Review Another Essay
             </button>
         </div>
         
-        <!-- 加载状态 -->
+        <!-- Loading state -->
         <div class="card" id="loadingCard" style="display: none;">
             <div class="loading" style="padding: 80px;">
                 <div class="loading-spinner"></div>
-                <span class="loading-text">AI正在批改作文...</span>
+                <span class="loading-text">AI is reviewing your essay...</span>
             </div>
         </div>
         
-        <!-- 初始提示 -->
+        <!-- Initial prompt -->
         <div class="card" id="emptyCard">
             <div class="empty-state">
                 <div class="empty-icon">📝</div>
-                <p class="empty-title">提交作文开始批改</p>
-                <p class="empty-text">AI会从结构、语法、词汇等多个维度进行评价</p>
+                <p class="empty-title">Submit your essay to start</p>
+                <p class="empty-text">AI will evaluate your essay from multiple dimensions including structure, grammar, and vocabulary</p>
             </div>
         </div>
     </div>
@@ -191,7 +191,7 @@
 
 {% block scripts %}
 <script>
-// 类型选择
+// Type selection
 const typeOptions = document.querySelectorAll('.essay-type-select .subject-option');
 const typeInput = document.getElementById('typeInput');
 
@@ -203,7 +203,7 @@ typeOptions.forEach(option => {
     });
 });
 
-// 字数统计
+// Word count
 const contentInput = document.getElementById('content');
 const wordCount = document.getElementById('wordCount');
 
@@ -211,17 +211,17 @@ contentInput.addEventListener('input', () => {
     wordCount.textContent = contentInput.value.length;
 });
 
-// 表单提交
+// Form submission
 async function submitEssay() {
     const content = contentInput.value;
     if (content.length < 100) {
-        showToast('作文内容太短，请至少输入100字', 'warning');
+        showToast('Essay is too short, please enter at least 100 characters', 'warning');
         return;
     }
     
     const formData = new FormData(document.getElementById('essayForm'));
     
-    // 显示加载状态
+    // Display loading state
     document.getElementById('emptyCard').style.display = 'none';
     document.getElementById('resultCard').style.display = 'none';
     document.getElementById('loadingCard').style.display = 'block';
@@ -233,18 +233,18 @@ async function submitEssay() {
             body: formData
         });
         
-        // 显示结果
+        // Display result
         document.getElementById('loadingCard').style.display = 'none';
         document.getElementById('resultCard').style.display = 'block';
         
-        // 总分
+        // Overall score
         document.getElementById('overallScore').textContent = result.overall_score || 0;
         
-        // 审题立意解读
+        // Topic analysis
         if (result.topic_analysis) {
             const ta = result.topic_analysis;
             
-            // 可选主题
+            // Possible themes
             const themesEl = document.getElementById('possibleThemes');
             if (ta.possible_themes && ta.possible_themes.length > 0) {
                 themesEl.innerHTML = ta.possible_themes.map(theme => `
@@ -254,16 +254,16 @@ async function submitEssay() {
                     </li>
                 `).join('');
             } else {
-                themesEl.innerHTML = '<li style="color: var(--text-secondary);">暂无数据</li>';
+                themesEl.innerHTML = '<li style="color: var(--text-secondary);">No data available</li>';
             }
             
-            // 出题人目的
-            document.getElementById('examinerPurpose').textContent = ta.examiner_purpose || '暂无分析';
+            // Examiner's purpose
+            document.getElementById('examinerPurpose').textContent = ta.examiner_purpose || 'No analysis available';
             
-            // 应该突出的要点
-            document.getElementById('keyPoints').textContent = ta.key_points || '暂无分析';
+            // Key points
+            document.getElementById('keyPoints').textContent = ta.key_points || 'No analysis available';
             
-            // 审题误解的常见方向
+            // Common mistakes
             const mistakesEl = document.getElementById('commonMistakes');
             if (ta.common_mistakes && ta.common_mistakes.length > 0) {
                 mistakesEl.innerHTML = ta.common_mistakes.map(mistake => `
@@ -273,32 +273,32 @@ async function submitEssay() {
                     </li>
                 `).join('');
             } else {
-                mistakesEl.innerHTML = '<li style="color: var(--text-secondary);">暂无数据</li>';
+                mistakesEl.innerHTML = '<li style="color: var(--text-secondary);">No data available</li>';
             }
         }
         
-        // 结构
+        // Structure
         if (result.structure) {
-            document.getElementById('structureScore').textContent = result.structure.score + '分';
+            document.getElementById('structureScore').textContent = result.structure.score + ' pts';
             document.getElementById('structureFeedback').textContent = result.structure.feedback || '';
         }
         
-        // 语法
+        // Grammar
         if (result.grammar) {
-            document.getElementById('grammarScore').textContent = result.grammar.score + '分';
+            document.getElementById('grammarScore').textContent = result.grammar.score + ' pts';
             document.getElementById('grammarFeedback').textContent = result.grammar.feedback || '';
         }
         
-        // 词汇
+        // Vocabulary
         if (result.vocabulary) {
-            document.getElementById('vocabularyScore').textContent = result.vocabulary.score + '分';
+            document.getElementById('vocabularyScore').textContent = result.vocabulary.score + ' pts';
             document.getElementById('vocabularyFeedback').textContent = result.vocabulary.feedback || '';
         }
         
-        // 总体评价
+        // Overall feedback
         document.getElementById('overallFeedback').textContent = result.overall_feedback || '';
         
-        // 建议
+        // Suggestions
         const suggestionsList = document.getElementById('suggestionsList');
         if (result.suggestions && result.suggestions.length > 0) {
             suggestionsList.innerHTML = result.suggestions.map((s, i) => `
@@ -308,10 +308,10 @@ async function submitEssay() {
                 </li>
             `).join('');
         } else {
-            suggestionsList.innerHTML = '<li style="color: var(--text-secondary);">暂无具体建议</li>';
+            suggestionsList.innerHTML = '<li style="color: var(--text-secondary);">No specific suggestions</li>';
         }
         
-        showToast('批改完成！');
+        showToast('Review complete!');
         
     } catch (error) {
         document.getElementById('loadingCard').style.display = 'none';

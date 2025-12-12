@@ -1,0 +1,105 @@
+{% extends "base-en.html" %}
+
+{% block body %}
+<!-- Navigation bar -->
+<nav class="navbar">
+    <div class="container">
+        <a href="/en" class="navbar-brand">
+            <div class="navbar-logo">🎓</div>
+            <span class="navbar-title">Smart Education</span>
+        </a>
+        
+        <div class="navbar-nav">
+            <a href="/en" class="nav-link {% if request.url.path == '/en' or request.url.path == '/' %}active{% endif %}">
+                <i class="fas fa-home icon"></i>
+                Home
+            </a>
+            <a href="/question-en" class="nav-link {% if request.url.path == '/question-en' %}active{% endif %}">
+                <i class="fas fa-question-circle icon"></i>
+                Q&A
+            </a>
+            <a href="/essay-en" class="nav-link {% if request.url.path == '/essay-en' %}active{% endif %}">
+                <i class="fas fa-pen-fancy icon"></i>
+                Essay
+            </a>
+            <a href="/chat-en" class="nav-link {% if request.url.path == '/chat-en' %}active{% endif %}">
+                <i class="fas fa-comments icon"></i>
+                Assistant
+            </a>
+        </div>
+        
+        <div class="navbar-user">
+            <a href="#" onclick="switchLanguage('zh')" class="btn btn-ghost btn-sm" style="margin-right: var(--spacing-md);">
+                <i class="fas fa-language"></i>
+                中文
+            </a>
+            <a href="/profile-en" class="user-avatar">{{ user.username[0] | upper }}</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Main layout -->
+<div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <nav class="sidebar-nav">
+            <a href="/en" class="sidebar-link {% if request.url.path == '/en' or request.url.path == '/' %}active{% endif %}">
+                <i class="fas fa-home icon"></i>
+                Learning Center
+            </a>
+            <a href="/question-en" class="sidebar-link {% if request.url.path == '/question-en' %}active{% endif %}">
+                <i class="fas fa-camera icon"></i>
+                Photo Solver
+            </a>
+            <a href="/essay-en" class="sidebar-link {% if request.url.path == '/essay-en' %}active{% endif %}">
+                <i class="fas fa-pen-fancy icon"></i>
+                Essay Review
+            </a>
+            <a href="/chat-en" class="sidebar-link {% if request.url.path == '/chat-en' %}active{% endif %}">
+                <i class="fas fa-robot icon"></i>
+                Chat Assistant
+            </a>
+            <a href="/wrong-book-en" class="sidebar-link {% if request.url.path == '/wrong-book-en' %}active{% endif %}">
+                <i class="fas fa-book icon"></i>
+                Wrong Book
+            </a>
+            <a href="/statistics-en" class="sidebar-link {% if request.url.path == '/statistics-en' %}active{% endif %}">
+                <i class="fas fa-chart-line icon"></i>
+                Statistics
+            </a>
+            <a href="/profile-en" class="sidebar-link {% if request.url.path == '/profile-en' %}active{% endif %}">
+                <i class="fas fa-user icon"></i>
+                Profile
+            </a>
+            <a href="#" class="sidebar-link" onclick="logout()">
+                <i class="fas fa-sign-out-alt icon"></i>
+                Logout
+            </a>
+        </nav>
+    </aside>
+    
+    <!-- Main content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+</div>
+
+<script>
+async function logout() {
+    await api('/api/logout', { method: 'POST' });
+    window.location.href = '/login-en';
+}
+
+function switchLanguage(lang) {
+    const currentPath = window.location.pathname;
+    if (lang === 'zh') {
+        // 切换到中文版
+        if (currentPath === '/en') {
+            window.location.href = '/';
+        } else if (currentPath.endsWith('-en')) {
+            window.location.href = currentPath.replace('-en', '');
+        }
+    }
+}
+</script>
+{% endblock %}

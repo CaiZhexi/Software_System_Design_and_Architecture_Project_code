@@ -1,0 +1,155 @@
+{% extends "layout-en.html" %}
+
+{% block title %}Learning Center - Smart Education Platform{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">👋 Hello, {{ user.username }}!</h1>
+    <p class="page-subtitle">What would you like to learn today? Choose a feature below to get started</p>
+</div>
+
+<!-- Quick function cards -->
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--spacing-xl); margin-bottom: var(--spacing-2xl);">
+    <a href="/question-en" class="card" style="text-decoration: none; cursor: pointer; transition: transform 0.3s;">
+        <div style="text-align: center;">
+            <div style="font-size: 56px; margin-bottom: var(--spacing-md);">📸</div>
+            <h3 style="color: var(--text-primary); margin-bottom: var(--spacing-sm);">Photo Solver</h3>
+            <p style="color: var(--text-secondary); font-size: 14px;">Take a photo or type a question, AI will help you solve it</p>
+        </div>
+    </a>
+    
+    <a href="/essay-en" class="card" style="text-decoration: none; cursor: pointer;">
+        <div style="text-align: center;">
+            <div style="font-size: 56px; margin-bottom: var(--spacing-md);">✍️</div>
+            <h3 style="color: var(--text-primary); margin-bottom: var(--spacing-sm);">Essay Review</h3>
+            <p style="color: var(--text-secondary); font-size: 14px;">Submit your essay for professional feedback</p>
+        </div>
+    </a>
+    
+    <a href="/chat-en" class="card" style="text-decoration: none; cursor: pointer;">
+        <div style="text-align: center;">
+            <div style="font-size: 56px; margin-bottom: var(--spacing-md);">💬</div>
+            <h3 style="color: var(--text-primary); margin-bottom: var(--spacing-sm);">Learning Assistant</h3>
+            <p style="color: var(--text-secondary); font-size: 14px;">Always ready to answer, your personal study partner</p>
+        </div>
+    </a>
+</div>
+
+<!-- Learning overview -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--spacing-xl);">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">📊 This Week's Overview</h3>
+        </div>
+        <div id="statsOverview" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--spacing-lg);">
+            <div style="text-align: center; padding: var(--spacing-lg); background: var(--bg-primary); border-radius: var(--radius-md);">
+                <div style="font-size: 32px; font-weight: 700; color: var(--primary);" id="statQuestions">-</div>
+                <div style="color: var(--text-secondary); font-size: 14px;">Questions Solved</div>
+            </div>
+            <div style="text-align: center; padding: var(--spacing-lg); background: var(--bg-primary); border-radius: var(--radius-md);">
+                <div style="font-size: 32px; font-weight: 700; color: var(--success);" id="statAccuracy">-</div>
+                <div style="color: var(--text-secondary); font-size: 14px;">Accuracy Rate</div>
+            </div>
+            <div style="text-align: center; padding: var(--spacing-lg); background: var(--bg-primary); border-radius: var(--radius-md);">
+                <div style="font-size: 32px; font-weight: 700; color: var(--purple);" id="statEssays">-</div>
+                <div style="color: var(--text-secondary); font-size: 14px;">Essays Reviewed</div>
+            </div>
+            <div style="text-align: center; padding: var(--spacing-lg); background: var(--bg-primary); border-radius: var(--radius-md);">
+                <div style="font-size: 32px; font-weight: 700; color: var(--secondary);" id="statMastered">-</div>
+                <div style="color: var(--text-secondary); font-size: 14px;">Mastered</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">⚠️ Weak Points</h3>
+        </div>
+        <ul class="weak-points-list" id="weakPointsList">
+            <li class="weak-point-item">
+                <span class="weak-point-name">Loading...</span>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- Recent history -->
+<div class="card" style="margin-top: var(--spacing-xl);">
+    <div class="card-header">
+        <h3 class="card-title">📝 Recent Learning History</h3>
+        <a href="/statistics-en" class="btn btn-ghost btn-sm">View All</a>
+    </div>
+    <div id="recentHistory">
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            <span class="loading-text">Loading...</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Load statistics
+async function loadStats() {
+    try {
+        const stats = await api('/api/statistics');
+        document.getElementById('statQuestions').textContent = stats.recent_questions;
+        document.getElementById('statAccuracy').textContent = stats.accuracy_rate + '%';
+        document.getElementById('statEssays').textContent = stats.essay_count;
+        document.getElementById('statMastered').textContent = stats.mastered_count;
+        
+        // Weak points
+        const weakList = document.getElementById('weakPointsList');
+        if (stats.weak_points.length > 0) {
+            weakList.innerHTML = stats.weak_points.map(wp => `
+                <li class="weak-point-item">
+                    <span class="weak-point-name">${wp.name}</span>
+                    <span class="weak-point-count">${wp.count} questions</span>
+                </li>
+            `).join('');
+        } else {
+            weakList.innerHTML = '<li class="weak-point-item"><span class="weak-point-name" style="color: var(--success);">No weak points 👍</span></li>';
+        }
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// Load recent history
+async function loadHistory() {
+    try {
+        const data = await api('/api/history?limit=5');
+        const container = document.getElementById('recentHistory');
+        
+        if (data.items.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📭</div>
+                    <p class="empty-title">No learning history yet</p>
+                    <p class="empty-text">Start by asking questions or practicing!</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = data.items.map(item => `
+            <div style="display: flex; align-items: center; padding: var(--spacing-md) 0; border-bottom: 1px solid var(--border);">
+                <div style="flex: 1;">
+                    <div style="font-weight: 500; margin-bottom: 4px;">${item.content ? item.content.substring(0, 50) + '...' : 'Image question'}</div>
+                    <div style="font-size: 13px; color: var(--text-secondary);">
+                        <span class="tag tag-info" style="margin-right: 8px;">${item.subject}</span>
+                        ${new Date(item.created_at).toLocaleString()}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+loadStats();
+loadHistory();
+</script>
+{% endblock %}

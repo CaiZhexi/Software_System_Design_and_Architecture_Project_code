@@ -1,21 +1,21 @@
-{% extends "base.html" %}
+{% extends "base-en.html" %}
 
-{% block title %}登录 - 智慧教育平台{% endblock %}
+{% block title %}Login - Smart Education Platform{% endblock %}
 
 {% block body %}
 <div style="position: absolute; top: 20px; right: 20px; z-index: 1000;">
-    <a href="/login-en" class="btn btn-ghost btn-sm">
+    <a href="/login" class="btn btn-ghost btn-sm">
         <i class="fas fa-language"></i>
-        English
+        中文
     </a>
 </div>
 <div class="auth-page">
     <div class="auth-left">
-        <h1>🎓 智慧教育平台</h1>
+        <h1>🎓 Smart Education Platform</h1>
         <p>
-            AI赋能的K12学习助手<br>
-            拍照解题 · 作文批改 · 智能辅导<br>
-            让学习更高效，更有趣！
+            AI-Powered K12 Learning Assistant<br>
+            Photo Solver · Essay Review · Smart Tutoring<br>
+            Make learning more efficient and fun!
         </p>
         <div class="auth-decorations">
             <div class="auth-decoration">📚</div>
@@ -26,28 +26,28 @@
     
     <div class="auth-right">
         <div class="auth-card">
-            <h2>欢迎回来</h2>
-            <p class="subtitle">登录你的账号，继续学习之旅</p>
+            <h2>Welcome Back</h2>
+            <p class="subtitle">Login to your account and continue learning</p>
             
             <form class="auth-form" id="loginForm">
                 <div class="input-group">
-                    <label for="username">用户名</label>
-                    <input type="text" class="input" id="username" name="username" placeholder="请输入用户名" required>
+                    <label for="username">Username</label>
+                    <input type="text" class="input" id="username" name="username" placeholder="Enter your username" required>
                 </div>
                 
                 <div class="input-group">
-                    <label for="password">密码</label>
-                    <input type="password" class="input" id="password" name="password" placeholder="请输入密码" required>
+                    <label for="password">Password</label>
+                    <input type="password" class="input" id="password" name="password" placeholder="Enter your password" required>
                 </div>
                 
                 <button type="submit" class="btn btn-primary btn-lg">
                     <i class="fas fa-sign-in-alt"></i>
-                    登录
+                    Login
                 </button>
             </form>
             
             <div class="auth-footer">
-                还没有账号？<a href="/register">立即注册</a>
+                Don't have an account? <a href="/register-en">Sign up now</a>
             </div>
         </div>
     </div>
@@ -66,10 +66,10 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             method: 'POST',
             body: formData
         });
-        showToast('登录成功！');
-        setTimeout(() => window.location.href = '/', 500);
+        showToast('Login successful!');
+        setTimeout(() => window.location.href = '/en', 500);
     } catch (error) {
-        // 错误已在api函数中处理
+        // Error already handled in api function
     }
 });
 </script>

@@ -81,6 +81,7 @@ class Essay(Base):
     grammar_feedback = Column(Text)
     vocabulary_feedback = Column(Text)
     suggestions = Column(Text)
+    topic_analysis = Column(Text)  # 审题立意解读 (JSON格式)
     
     created_at = Column(DateTime, default=datetime.now)
     
